@@ -1,0 +1,9 @@
+from .auth import router as auth_router
+from .equipments import router as equipment_router
+from .softwares import router as software_router
+from .infrastructure import router as infrastructure_router
+from .projects import router as project_router
+from .scripts import router as script_router
+from .technologies import router as technology_router
+from .dashboard import router as dashboard_router
+from .topology import router as topology_router

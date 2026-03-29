@@ -1,0 +1,4392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerenciador de TI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖥️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Drawflow — mapa de topologia de rede -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg2: #111620;
+      --bg3: #181e2b;
+      --card: #141926;
+      --border: #1e2736;
+      --border2: #252f42;
+      --accent: #3b7fff;
+      --accent2: #5b9eff;
+      --accent-glow: rgba(59,127,255,0.18);
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --sidebar-w: 240px;
+      --transition: 0.2s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════ AUTH ═══════════ */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      position: relative;
+    }
+
+    #auth-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(59,127,255,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(168,85,247,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 900px;
+      width: 95%;
+      min-height: 520px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border2);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-brand {
+      background: linear-gradient(135deg, #0f1829 0%, #0d1520 100%);
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-brand::before {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59,127,255,0.15) 0%, transparent 70%);
+      top: -80px; right: -80px;
+    }
+
+    .auth-brand::after {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%);
+      bottom: -60px; left: -40px;
+    }
+
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin-bottom: 28px;
+      position: relative; z-index: 1;
+    }
+
+    .brand-title {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      position: relative; z-index: 1;
+    }
+
+    .brand-title span { color: var(--accent); }
+
+    .brand-desc {
+      color: var(--text2);
+      font-size: 14px;
+      line-height: 1.6;
+      position: relative; z-index: 1;
+    }
+
+    .brand-features {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative; z-index: 1;
+    }
+
+    .brand-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .brand-feature i { color: var(--accent); width: 16px; }
+
+    .auth-form-panel {
+      background: var(--card);
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auth-form-panel h2 {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .auth-form-panel p { color: var(--text2); font-size: 14px; margin-bottom: 32px; }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-control::placeholder { color: var(--text3); }
+
+    select.form-control { cursor: pointer; }
+
+    textarea.form-control { resize: vertical; min-height: 90px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent2);
+      box-shadow: 0 4px 20px rgba(59,127,255,0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg2);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.12);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+    .btn-success {
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+
+    .btn-success:hover { background: rgba(34,197,94,0.2); }
+
+    .btn-sm { padding: 7px 14px; font-size: 12px; }
+    .btn-full { width: 100%; }
+
+    /* ═══════════ LAYOUT ═══════════ */
+    #app-screen { display: flex; min-height: 100vh; }
+
+    /* ═══════════ SIDEBAR ═══════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+    }
+
+    .sidebar-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .sidebar-brand small {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 10px;
+      overflow-y: auto;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 10px 10px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-bottom: 2px;
+      border: 1px solid transparent;
+    }
+
+    .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+
+    .nav-item.active {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: rgba(59,127,255,0.2);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; truncate: ellipsis; white-space: nowrap; overflow: hidden; }
+    .user-role { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .btn-logout {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 14px;
+      transition: color var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-logout:hover { color: var(--red); }
+
+    /* ═══════════ MAIN CONTENT ═══════════ */
+    /* .main-content: flex-column para poder hospedar o topo-page no tamanho certo */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: sticky; top: 0;
+      background: rgba(10,13,18,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 80;       /* acima do Drawflow (z-index padrão ~20) */
+      flex-shrink: 0;    /* não encolhe no flex context do main-content */
+    }
+
+    .topbar-title {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .topbar-title span { color: var(--text3); font-size: 13px; font-weight: 400; margin-left: 8px; font-family: var(--font-body); }
+
+    /* Páginas normais */
+    /* Páginas ocultas por padrão */
+    .page {
+      display: none;
+      padding: 28px;
+      overflow-y: auto;
+      flex: 1;          /* cresce no flex context do main-content */
+      min-height: 0;
+    }
+
+    /* Página normal ativa: block com scroll */
+    .page.active { display: block; }
+
+    /* Infraestrutura: precisa ser flex-column para o canvas crescer */
+    #page-infrastructure.active {
+      display: flex !important;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* Infraestrutura/Topologia: ocupa toda a altura disponível sem padding */
+    .topo-page { display: none !important; padding: 0; }
+    .topo-page.active {
+      display: flex !important;
+      flex-direction: column;
+      /* Altura = viewport menos topbar (57px) */
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+
+    /* ─── Páginas normais: rolagem vertical; topo-page: flex (sem padding) ─── */
+
+    /* ═══════════ CARDS / STATS ═══════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition);
+    }
+
+    .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--accent));
+      border-radius: 2px 2px 0 0;
+    }
+
+    .stat-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--icon-bg, rgba(59,127,255,0.12));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: var(--icon-color, var(--accent));
+      margin-bottom: 14px;
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label { font-size: 12px; color: var(--text3); }
+
+    /* ═══════════ TABLE ═══════════ */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .search-bar i { color: var(--text3); font-size: 13px; }
+
+    .search-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 9px 0;
+      width: 100%;
+    }
+
+    .search-bar input::placeholder { color: var(--text3); }
+
+    .table-wrapper {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--bg3);
+      padding: 11px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg3); }
+
+    tbody td {
+      padding: 12px 16px;
+      font-size: 13.5px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .td-mono { font-family: var(--font-mono); font-size: 12px; color: var(--text2); }
+    .td-actions { display: flex; gap: 6px; align-items: center; }
+
+    /* ═══════════ BADGES ═══════════ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-green  { background: rgba(34,197,94,0.12);  color: var(--green);  }
+    .badge-red    { background: rgba(239,68,68,0.12);   color: var(--red);    }
+    .badge-yellow { background: rgba(245,158,11,0.12);  color: var(--yellow); }
+    .badge-blue   { background: rgba(59,127,255,0.12);  color: var(--accent); }
+    .badge-purple { background: rgba(168,85,247,0.12);  color: var(--purple); }
+    .badge-cyan   { background: rgba(6,182,212,0.12);   color: var(--cyan);   }
+    .badge-gray   { background: rgba(100,116,139,0.12); color: var(--text3);  }
+
+    /* ═══════════ MODAL ═══════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-lg { max-width: 740px; }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 22px 24px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none; border: none;
+      color: var(--text3); cursor: pointer;
+      font-size: 18px; line-height: 1;
+      transition: color var(--transition);
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 24px; }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ═══════════ PROGRESS BAR ═══════════ */
+    .progress-bar {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* ═══════════ CODE BLOCK ═══════════ */
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text2);
+      overflow-x: auto;
+      white-space: pre;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    /* ═══════════ ALERTS ═══════════ */
+    .alert {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .alert-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: var(--yellow); }
+    .alert-error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.2);  color: var(--red); }
+    .alert-success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.2);  color: var(--green); }
+
+    /* ═══════════ TOAST ═══════════ */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 9999;
+    }
+
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: 13px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.3s ease;
+      max-width: 320px;
+    }
+
+    .toast-success { border-left: 3px solid var(--green); }
+    .toast-error   { border-left: 3px solid var(--red); }
+    .toast-info    { border-left: 3px solid var(--accent); }
+
+    @keyframes toastIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ═══════════ LOADER ═══════════ */
+    .loader {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      color: var(--text3);
+      gap: 12px;
+    }
+
+    /* ═══════════ EMPTY STATE ═══════════ */
+    .empty-state {
+      text-align: center;
+      padding: 56px 24px;
+    }
+
+    .empty-state i { font-size: 40px; color: var(--text3); margin-bottom: 14px; display: block; }
+    .empty-state h3 { font-family: var(--font-head); font-size: 16px; margin-bottom: 6px; }
+    .empty-state p { color: var(--text3); font-size: 13px; }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .auth-grid { grid-template-columns: 1fr; }
+      .auth-brand { display: none; }
+      .main-content { margin-left: 0; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); width: 240px; }
+      .form-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .page { padding: 16px; }
+    }
+
+    /* ═══════════ CHART PLACEHOLDER ═══════════ */
+    .mini-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 40px;
+      margin-top: 12px;
+    }
+
+    .mini-bar {
+      flex: 1;
+      background: var(--accent-glow);
+      border-radius: 3px 3px 0 0;
+      transition: background var(--transition);
+    }
+
+    .mini-bar:hover { background: var(--accent); }
+
+    /* Script language tags */
+    .lang-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .lang-python  { background: rgba(59,127,255,0.1); color: #60a5fa; }
+    .lang-bash    { background: rgba(34,197,94,0.1);  color: #4ade80; }
+    .lang-sql     { background: rgba(245,158,11,0.1); color: #fbbf24; }
+    .lang-javascript { background: rgba(251,191,36,0.1); color: #fde68a; }
+    .lang-other   { background: rgba(100,116,139,0.1); color: var(--text3); }
+
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+
+    /* ═══════════ TOPOLOGY MAP ═══════════ */
+
+    /* Sobrescreve tema padrão (branco) do Drawflow para dark */
+    /* O canvas Drawflow preenche exatamente o .topo-canvas-wrap */
+    #drawflow {
+      background-color: #0f172a;
+      background-image: radial-gradient(circle, rgba(148,163,184,0.09) 1px, transparent 1px);
+      background-size: 24px 24px;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Garante que drawflow não vaze quando a aba não está ativa */
+    #page-infrastructure:not(.active) #drawflow {
+      display: none;
+    }
+
+    .drawflow .drawflow-node {
+      background: #141926;
+      border: 1.5px solid #1e2736;
+      border-radius: 12px;
+      color: #e2e8f0;
+      padding: 0;
+      min-width: 190px;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.5);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .drawflow .drawflow-node.selected {
+      border-color: #3b7fff;
+      box-shadow: 0 0 0 2px rgba(59,127,255,0.35), 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .drawflow .drawflow-node .input,
+    .drawflow .drawflow-node .output {
+      background: #3b7fff;
+      border: 2px solid #0f172a;
+      width: 13px;
+      height: 13px;
+    }
+
+    .drawflow .drawflow-node .input:hover,
+    .drawflow .drawflow-node .output:hover {
+      background: #5b9eff;
+      transform: scale(1.3);
+    }
+
+    .drawflow .connection .main-path {
+      stroke: #3b7fff;
+      stroke-width: 2.5;
+      fill: none;
+      filter: drop-shadow(0 0 5px rgba(59,127,255,0.45));
+    }
+
+    .drawflow .connection .main-path:hover,
+    .drawflow .connection .main-path.selected {
+      stroke: #5b9eff;
+      stroke-width: 3.5;
+    }
+
+    .drawflow .connection .point {
+      fill: #3b7fff;
+      stroke: #0f172a;
+    }
+
+    /* Nó customizado de equipamento */
+    .df-eq-node {
+      display: flex;
+      align-items: stretch;
+      min-height: 64px;
+    }
+
+    .df-eq-icon {
+      width: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px 0 0 10px;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .df-eq-body {
+      flex: 1;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+
+    .df-eq-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+      color: #e2e8f0;
+    }
+
+    .df-eq-meta {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .df-eq-status {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .df-eq-ip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #475569;
+      margin-top: 4px;
+    }
+
+    /* Painel lateral do topology — cresce para preencher o espaço restante */
+    .topo-page {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .topo-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .topo-toolbar-title {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .topo-toolbar-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border2);
+      margin: 0 4px;
+    }
+
+    .topo-workspace {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;   /* contém o canvas sem vazar para outras abas */
+      position: relative;
+    }
+
+    /* Sidebar interna do topology (equipamentos arrastáveis) */
+    .topo-panel {
+      width: 220px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .topo-panel-header {
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topo-panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .topo-panel-search {
+      display: flex;
+      align-items: center;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 0 8px;
+      gap: 6px;
+    }
+
+    .topo-panel-search i { color: var(--text3); font-size: 11px; }
+    .topo-panel-search input {
+      background: none; border: none; outline: none;
+      font-size: 12px; color: var(--text); padding: 7px 0; width: 100%;
+    }
+    .topo-panel-search input::placeholder { color: var(--text3); }
+
+    .topo-panel-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px;
+    }
+
+    .topo-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 4px 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topo-group-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .topo-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: grab;
+      margin-bottom: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .topo-item:hover {
+      background: var(--bg3);
+      border-color: var(--border2);
+    }
+
+    .topo-item:active { cursor: grabbing; opacity: 0.7; }
+
+    .topo-item-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .topo-item-info { flex: 1; min-width: 0; }
+    .topo-item-name {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topo-item-type { font-size: 10px; color: var(--text3); }
+
+    /* Indicador live de conectividade */
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #475569;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+    .live-dot.online  { background: #22c55e; box-shadow: 0 0 5px #22c55e99; }
+    .live-dot.offline { background: #ef4444; box-shadow: 0 0 5px #ef444499; }
+
+    /* Badge de status do monitor na toolbar */
+    #monitor-badge {
+      font-size: 11px; padding: 3px 8px; border-radius: 6px;
+      background: var(--bg3); color: var(--text3);
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    #monitor-badge.running { color: #3b82f6; }
+
+    .topo-canvas-wrap {
+      flex: 1;
+      position: relative;  /* ancora o #drawflow absolute */
+      overflow: hidden;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    /* Zoom controls overlay */
+    .topo-zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+    }
+
+    .topo-zoom-btn {
+      width: 34px; height: 34px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--text2);
+      transition: all 0.15s;
+    }
+
+    .topo-zoom-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--bg3); }
+
+    /* Legend overlay */
+    .topo-legend {
+      position: absolute;
+      bottom: 20px;
+      left: 16px;
+      background: rgba(20,25,38,0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--text3);
+      z-index: 10;
+    }
+
+    .topo-legend-row {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+    }
+    .topo-legend-row:last-child { margin-bottom: 0; }
+    .topo-legend-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    /* Empty panel state */
+    .topo-panel-empty {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--text3);
+      font-size: 12px;
+    }
+    .topo-panel-empty i { font-size: 24px; display: block; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="auth-screen">
+  <div class="auth-grid">
+    <div class="auth-brand">
+      <div class="brand-icon">🖥️</div>
+      <div class="brand-title">Gerenciador<br>de <span>TI</span></div>
+      <div class="brand-desc">Controle completo da infraestrutura, equipamentos, softwares e projetos da sua empresa.</div>
+      <div class="brand-features">
+        <div class="brand-feature"><i class="fas fa-laptop"></i> Controle de equipamentos</div>
+        <div class="brand-feature"><i class="fas fa-key"></i> Gestão de licenças</div>
+        <div class="brand-feature"><i class="fas fa-server"></i> Monitoramento de infraestrutura</div>
+        <div class="brand-feature"><i class="fas fa-code"></i> Repositório de scripts</div>
+        <div class="brand-feature"><i class="fas fa-chart-bar"></i> Dashboard em tempo real</div>
+      </div>
+    </div>
+    <div class="auth-form-panel">
+      <h2>Bem-vindo de volta</h2>
+      <p>Faça login para acessar o painel</p>
+      <div id="login-error" class="alert alert-error" style="display:none">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="login-error-msg">Usuário ou senha incorretos.</span>
+      </div>
+      <div class="form-group">
+        <label>Usuário</label>
+        <input type="email" id="login-username" class="form-control" placeholder="seu@email.com" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()" id="login-btn">
+        <i class="fas fa-sign-in-alt"></i> Entrar
+      </button>
+      <p style="margin-top:16px;font-size:12px;color:var(--text3);text-align:center;">
+        Use o e-mail e senha cadastrados no Supabase Auth
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP SCREEN ══════════ -->
+<div id="app-screen" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🖥️</div>
+      <div class="sidebar-brand">
+        Gerenciador TI
+        <small>Sistema Interno</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <i class="fas fa-th-large"></i> Dashboard
+      </div>
+
+      <div class="nav-section-label">Ativos</div>
+      <div class="nav-item" onclick="navigate('equipments')">
+        <i class="fas fa-laptop"></i> Equipamentos
+      </div>
+      <div class="nav-item" onclick="navigate('softwares')">
+        <i class="fas fa-box-open"></i> Softwares
+        <span class="nav-badge" id="sw-alert-badge" style="display:none">!</span>
+      </div>
+      <div class="nav-item" onclick="navigate('infrastructure')">
+        <i class="fas fa-server"></i> Infraestrutura
+      </div>
+
+      <div class="nav-section-label">Desenvolvimento</div>
+      <div class="nav-item" onclick="navigate('projects')">
+        <i class="fas fa-project-diagram"></i> Projetos
+      </div>
+      <div class="nav-item" onclick="navigate('scripts')">
+        <i class="fas fa-code"></i> Scripts
+      </div>
+      <div class="nav-item" onclick="navigate('technologies')">
+        <i class="fas fa-microchip"></i> Tecnologias
+      </div>
+
+      <div class="nav-section-label">Gestão</div>
+      <div class="nav-item" onclick="navigate('clients')">
+        <i class="fas fa-building"></i> Clientes
+      </div>
+      <div class="nav-item" onclick="navigate('profile')">
+        <i class="fas fa-user-circle"></i> Meu Perfil
+      </div>
+      <div class="nav-item" id="nav-users" onclick="navigate('users')">
+        <i class="fas fa-users-gear"></i> Usuários
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="user-display-name">Admin</div>
+          <div class="user-role" id="user-display-role">admin</div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()" title="Sair">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">
+        Dashboard <span id="page-subtitle"></span>
+      </div>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="page-loader"><div class="loader"></div> Carregando...</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px" id="dashboard-tables">
+        <!-- Preenchido via JS -->
+      </div>
+      <div style="display:grid;grid-template-columns:180px 1fr 1fr;gap:20px;margin-bottom:24px" id="dashboard-analytics">
+        <!-- Preenchido via JS -->
+      </div>
+    </div>
+
+    <!-- ══ EQUIPAMENTOS ══ -->
+    <div class="page" id="page-equipments">
+      <div class="section-header">
+        <div class="section-title">Equipamentos</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar equipamento..." id="eq-search" oninput="debounce(loadEquipments,400)()" />
+        </div>
+        <select class="form-control" style="width:140px" id="eq-status-filter" onchange="loadEquipments()">
+          <option value="">Todos status</option>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="manutencao">Manutenção</option>
+          <option value="descartado">Descartado</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="exportEquipmentsCSV()" title="Exportar CSV">
+          <i class="fas fa-file-csv"></i> CSV
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openEquipmentModal()">
+          <i class="fas fa-plus"></i> Novo
+        </button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>Tipo</th><th>Patrimônio</th>
+              <th>Responsável</th><th>Localização</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="eq-tbody"></tbody>
+        </table>
+      </div>
+      <div id="eq-empty" class="empty-state" style="display:none">
+        <i class="fas fa-laptop"></i>
+        <h3>Nenhum equipamento</h3>
+        <p>Cadastre o primeiro equipamento clicando em "Novo"</p>
+      </div>
+    </div>
+
+    <!-- ══ SOFTWARES ══ -->
+    <div class="page" id="page-softwares">
+      <div class="section-header">
+        <div class="section-title">Softwares</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar software..." id="sw-search" oninput="debounce(loadSoftwares,400)()" />
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openSoftwareModal()">
+          <i class="fas fa-plus"></i> Novo
+        </button>
+      </div>
+      <div id="sw-alerts-box"></div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>Versão</th><th>Tipo Licença</th>
+              <th>Fornecedor</th><th>Validade</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="sw-tbody"></tbody>
+        </table>
+      </div>
+      <div id="sw-empty" class="empty-state" style="display:none">
+        <i class="fas fa-box-open"></i>
+        <h3>Nenhum software</h3>
+        <p>Cadastre o primeiro software clicando em "Novo"</p>
+      </div>
+    </div>
+
+    <!-- ══ INFRAESTRUTURA / MAPA DE TOPOLOGIA ══ -->
+    <div class="page topo-page" id="page-infrastructure">
+
+      <!-- Toolbar superior -->
+      <div class="topo-toolbar">
+        <div class="topo-toolbar-title">
+          <i class="fas fa-project-diagram" style="color:var(--accent);margin-right:6px"></i>
+          Mapa de Topologia
+        </div>
+        <div class="topo-toolbar-sep"></div>
+
+        <!-- Controles de zoom -->
+        <button class="btn btn-secondary btn-sm" onclick="topoZoomIn()" title="Zoom +">
+          <i class="fas fa-magnifying-glass-plus"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="topoZoomOut()" title="Zoom −">
+          <i class="fas fa-magnifying-glass-minus"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="topoFit()" title="Centralizar">
+          <i class="fas fa-expand"></i>
+        </button>
+
+        <div class="topo-toolbar-sep"></div>
+
+        <!-- Ações -->
+        <button class="btn btn-secondary btn-sm" onclick="topoLoad()" title="Recarregar do servidor">
+          <i class="fas fa-rotate-right"></i> Carregar
+        </button>
+        <button class="btn btn-success btn-sm" onclick="salvarLayoutMapa()" id="topo-save-btn">
+          <i class="fas fa-floppy-disk"></i> Salvar Mapa
+        </button>
+
+        <div class="topo-toolbar-sep"></div>
+
+        <button class="btn btn-danger btn-sm" onclick="topoClear()" title="Limpar canvas">
+          <i class="fas fa-trash-can"></i> Limpar
+        </button>
+
+        <div class="topo-toolbar-sep"></div>
+
+        <!-- Monitoramento de conectividade -->
+        <button class="btn btn-secondary btn-sm" onclick="runConnectivityCheck(false)" id="btn-ping" title="Verificar conectividade dos ativos agora">
+          <i class="fas fa-satellite-dish"></i> Ping
+        </button>
+        <span id="monitor-badge"><i class="fas fa-circle-dot" style="color:#64748b"></i> —</span>
+
+        <div style="flex:1"></div>
+
+        <!-- Cadastrar ativo de infra -->
+        <button class="btn btn-primary btn-sm" onclick="openInfraModal()" title="Novo ativo de infraestrutura">
+          <i class="fas fa-plus"></i> Novo Ativo
+        </button>
+        <!-- Toggle: ver lista de infraestrutura cadastrada -->
+        <button class="btn btn-secondary btn-sm" onclick="toggleInfraList()" id="btn-infra-list-toggle" title="Ver lista de ativos">
+          <i class="fas fa-list"></i> Lista
+        </button>
+      </div>
+
+      <!-- Área de trabalho: panel + canvas -->
+      <div class="topo-workspace">
+
+        <!-- Painel lateral: equipamentos arrastáveis -->
+        <div class="topo-panel">
+          <div class="topo-panel-header">
+            <div class="topo-panel-title">Equipamentos</div>
+            <div class="topo-panel-search">
+              <i class="fas fa-search"></i>
+              <input type="text" id="topo-search" placeholder="Filtrar..." oninput="topoFilterItems()" />
+            </div>
+          </div>
+          <div class="topo-panel-list" id="topo-panel-list">
+            <div class="topo-panel-empty">
+              <i class="fas fa-spinner fa-spin"></i>
+              Carregando...
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Drawflow -->
+        <div class="topo-canvas-wrap"
+          ondragover="event.preventDefault()"
+          ondrop="topoDrop(event)">
+          <div id="drawflow"></div>
+
+          <!-- Controles de zoom flutuantes -->
+          <div class="topo-zoom-controls">
+            <div class="topo-zoom-btn" onclick="topoZoomIn()" title="Zoom +">+</div>
+            <div class="topo-zoom-btn" onclick="topoZoomOut()" title="Zoom −">−</div>
+            <div class="topo-zoom-btn" onclick="topoFit()" title="Centralizar">⊡</div>
+          </div>
+
+          <!-- Legenda -->
+          <div class="topo-legend">
+            <div class="topo-legend-row"><div class="topo-legend-dot" style="background:#22c55e"></div> Ativo</div>
+            <div class="topo-legend-row"><div class="topo-legend-dot" style="background:#f59e0b"></div> Manutenção</div>
+            <div class="topo-legend-row"><div class="topo-legend-dot" style="background:#64748b"></div> Inativo</div>
+            <div class="topo-legend-row"><div class="topo-legend-dot" style="background:#3b7fff;width:24px;height:2px;border-radius:1px"></div> Conexão</div>
+          </div>
+
+          <!-- Hint inicial -->
+          <div id="topo-hint" style="
+            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            text-align:center;pointer-events:none;color:var(--text3)">
+            <i class="fas fa-hand-pointer" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4"></i>
+            <div style="font-size:14px;opacity:0.5">Arraste equipamentos do painel para o mapa</div>
+            <div style="font-size:12px;opacity:0.35;margin-top:4px">Conecte os nós arrastando de porta a porta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawer: lista de infraestrutura (toggle) -->
+      <div id="infra-list-drawer" style="
+        display:none;
+        position:fixed;right:0;top:0;bottom:0;
+        width:360px;background:var(--card);
+        border-left:1px solid var(--border2);
+        z-index:200;overflow-y:auto;
+        box-shadow:-4px 0 24px rgba(0,0,0,0.6)">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:700">Ativos de Infraestrutura</div>
+          <button class="modal-close" onclick="toggleInfraList()">×</button>
+        </div>
+        <div id="infra-list-content" style="padding:12px"></div>
+      </div>
+    </div>
+
+
+    <!-- ══ PROJETOS ══ -->
+    <div class="page" id="page-projects">
+      <div class="section-header">
+        <div class="section-title">Projetos</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar projeto..." id="proj-search" oninput="debounce(loadProjects,400)()" />
+        </div>
+        <select class="form-control" style="width:160px" id="proj-status-filter" onchange="loadProjects()">
+          <option value="">Todos status</option>
+          <option value="planejamento">Planejamento</option>
+          <option value="em_andamento">Em andamento</option>
+          <option value="pausado">Pausado</option>
+          <option value="concluido">Concluído</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openProjectModal()">
+          <i class="fas fa-plus"></i> Novo
+        </button>
+      </div>
+      <div id="proj-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+      <div id="proj-empty" class="empty-state" style="display:none">
+        <i class="fas fa-project-diagram"></i>
+        <h3>Nenhum projeto</h3>
+        <p>Cadastre o primeiro projeto clicando em "Novo"</p>
+      </div>
+    </div>
+
+    <!-- ══ SCRIPTS ══ -->
+    <div class="page" id="page-scripts">
+      <div class="section-header">
+        <div class="section-title">Scripts e Códigos</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar script..." id="sc-search" oninput="debounce(loadScripts,400)()" />
+        </div>
+        <select class="form-control" style="width:140px" id="sc-lang-filter" onchange="loadScripts()">
+          <option value="">Todas linguagens</option>
+          <option value="python">Python</option>
+          <option value="bash">Bash</option>
+          <option value="sql">SQL</option>
+          <option value="javascript">JavaScript</option>
+          <option value="powershell">PowerShell</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openScriptModal()">
+          <i class="fas fa-plus"></i> Novo
+        </button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th><th>Linguagem</th><th>Utilizado em</th>
+              <th>Tags</th><th>Autor</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="sc-tbody"></tbody>
+        </table>
+      </div>
+      <div id="sc-empty" class="empty-state" style="display:none">
+        <i class="fas fa-code"></i>
+        <h3>Nenhum script</h3>
+        <p>Armazene scripts e snippets clicando em "Novo"</p>
+      </div>
+    </div>
+
+    <!-- ══ TECNOLOGIAS ══ -->
+    <div class="page" id="page-technologies">
+      <div class="section-header">
+        <div class="section-title">Tecnologias</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar tecnologia..." id="tech-search" oninput="debounce(loadTechnologies,400)()" />
+        </div>
+        <select class="form-control" style="width:140px" id="tech-cat-filter" onchange="loadTechnologies()">
+          <option value="">Todas</option>
+          <option value="backend">Backend</option>
+          <option value="frontend">Frontend</option>
+          <option value="banco">Banco de dados</option>
+          <option value="devops">DevOps</option>
+          <option value="mobile">Mobile</option>
+          <option value="outro">Outro</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openTechModal()">
+          <i class="fas fa-plus"></i> Nova
+        </button>
+      </div>
+      <div id="tech-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px"></div>
+      <div id="tech-empty" class="empty-state" style="display:none">
+        <i class="fas fa-microchip"></i>
+        <h3>Nenhuma tecnologia</h3>
+        <p>Registre as tecnologias da empresa clicando em "Nova"</p>
+      </div>
+    </div>
+
+    <!-- ══ CLIENTES ══ -->
+    <div class="page" id="page-clients">
+      <div class="section-header">
+        <div class="section-title">Clientes</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar cliente..." id="cli-search" oninput="debounce(loadClients,400)()" />
+        </div>
+        <select class="form-control" style="width:160px" id="cli-status-filter" onchange="loadClients()">
+          <option value="">Todos status</option>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="prospecto">Prospecto</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openClientModal()">
+          <i class="fas fa-plus"></i> Novo Cliente
+        </button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Nome / Razão Social</th><th>CNPJ/CPF</th><th>Contato</th><th>Tipo de Serviço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="cli-tbody"></tbody>
+        </table>
+      </div>
+      <div id="cli-empty" class="empty-state" style="display:none">
+        <i class="fas fa-building"></i><h3>Nenhum cliente</h3>
+        <p>Cadastre o primeiro cliente clicando em "Novo Cliente"</p>
+      </div>
+    </div>
+
+    <!-- ══ PERFIL ══ -->
+    <div class="page" id="page-profile">
+      <div style="max-width:520px;margin:0 auto">
+        <div class="table-wrapper" style="padding:0;margin-bottom:20px">
+          <div style="padding:24px 28px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:18px">
+              <div id="profile-avatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;flex-shrink:0">A</div>
+              <div>
+                <div id="profile-name-display" style="font-family:var(--font-head);font-size:20px;font-weight:700">—</div>
+                <div id="profile-email-display" style="font-size:13px;color:var(--text3);margin-top:2px">—</div>
+                <div id="profile-role-badge" style="margin-top:6px"></div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:24px 28px">
+            <div class="form-group">
+              <label>Nome de Exibição</label>
+              <input type="text" id="profile-name-input" class="form-control" placeholder="Seu nome" />
+            </div>
+            <div class="form-group">
+              <label>E-mail</label>
+              <input type="email" id="profile-email-input" class="form-control" disabled style="opacity:0.5;cursor:not-allowed" />
+              <div style="font-size:11px;color:var(--text3);margin-top:4px">O e-mail não pode ser alterado aqui.</div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Salvar Alterações</button>
+              <button class="btn btn-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Sair da Conta</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrapper" style="padding:20px 28px">
+          <div style="font-family:var(--font-head);font-size:14px;font-weight:700;margin-bottom:16px">🔒 Segurança</div>
+          <div class="form-group">
+            <label>Nova Senha</label>
+            <input type="password" id="profile-new-password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label>Confirmar Nova Senha</label>
+            <input type="password" id="profile-confirm-password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+          </div>
+          <button class="btn btn-secondary" onclick="changePassword()"><i class="fas fa-key"></i> Alterar Senha</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ USUÁRIOS (admin only) ══ -->
+    <div class="page" id="page-users">
+      <div class="section-header">
+        <div class="section-title">Usuários do Sistema</div>
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar usuário..." id="usr-search" oninput="debounce(loadUsers,400)()" />
+        </div>
+        <select class="form-control" style="width:160px" id="usr-role-filter" onchange="loadUsers()">
+          <option value="">Todos os níveis</option>
+          <option value="admin">Admin</option>
+          <option value="elevated">Usuário Elevado</option>
+          <option value="user">Usuário Comum</option>
+        </select>
+        <button class="btn btn-primary" onclick="openInviteModal()">
+          <i class="fas fa-user-plus"></i> Adicionar Usuário
+        </button>
+      </div>
+      <div id="usr-admin-gate" style="display:none" class="empty-state">
+        <i class="fas fa-lock"></i>
+        <h3>Acesso restrito</h3>
+        <p>Somente administradores podem gerenciar usuários.</p>
+      </div>
+      <div id="usr-table-wrap">
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Nível de Acesso</th><th>Criado em</th><th>Ações</th></tr></thead>
+            <tbody id="usr-tbody"></tbody>
+          </table>
+        </div>
+        <div id="usr-empty" class="empty-state" style="display:none">
+          <i class="fas fa-users"></i><h3>Nenhum usuário</h3>
+          <p>Clique em "Adicionar Usuário" para criar o primeiro acesso.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app-screen -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Equipment Modal -->
+<div class="modal-overlay" id="modal-equipment">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="eq-modal-title">Novo Equipamento</div>
+      <button class="modal-close" onclick="closeModal('modal-equipment')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eq-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="eq-name" class="form-control" placeholder="Notebook Dell XPS 15" />
+        </div>
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="eq-type" class="form-control">
+            <option value="Notebook">Notebook</option>
+            <option value="Desktop">Desktop</option>
+            <option value="Printer">Impressora</option>
+            <option value="Monitor">Monitor</option>
+            <option value="Switch">Switch</option>
+            <option value="Router">Roteador</option>
+            <option value="Server">Servidor</option>
+            <option value="Tablet">Tablet</option>
+            <option value="Mobile">Celular</option>
+            <option value="Other">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Patrimônio</label>
+          <input type="text" id="eq-patrimony" class="form-control" placeholder="PAT-001" />
+        </div>
+        <div class="form-group">
+          <label>Número de Série</label>
+          <input type="text" id="eq-serial" class="form-control" placeholder="SN123456" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" id="eq-brand" class="form-control" placeholder="Dell" />
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" id="eq-model" class="form-control" placeholder="XPS 15 9530" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Usuário Responsável</label>
+          <input type="text" id="eq-responsible" class="form-control" placeholder="João Silva" />
+        </div>
+        <div class="form-group">
+          <label>Localização</label>
+          <input type="text" id="eq-location" class="form-control" placeholder="Sala TI - 2º andar" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="eq-status" class="form-control">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="descartado">Descartado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data de Compra</label>
+          <input type="date" id="eq-purchase" class="form-control" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="eq-notes" class="form-control" placeholder="Informações adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-equipment')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEquipment()" id="eq-save-btn">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Software Modal -->
+<div class="modal-overlay" id="modal-software">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="sw-modal-title">Novo Software</div>
+      <button class="modal-close" onclick="closeModal('modal-software')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sw-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="sw-name" class="form-control" placeholder="Microsoft Office 365" />
+        </div>
+        <div class="form-group">
+          <label>Versão</label>
+          <input type="text" id="sw-version" class="form-control" placeholder="2024" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Licença</label>
+          <select id="sw-license-type" class="form-control">
+            <option value="assinatura">Assinatura</option>
+            <option value="perpetua">Perpétua</option>
+            <option value="freeware">Freeware</option>
+            <option value="open_source">Open Source</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fornecedor</label>
+          <input type="text" id="sw-vendor" class="form-control" placeholder="Microsoft" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Validade</label>
+          <input type="date" id="sw-valid-until" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Custo Mensal (R$)</label>
+          <input type="number" id="sw-cost" class="form-control" placeholder="299.90" step="0.01" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Máx. instalações</label>
+          <input type="number" id="sw-max-inst" class="form-control" placeholder="5" />
+        </div>
+        <div class="form-group">
+          <label>Alertar (dias antes)</label>
+          <input type="number" id="sw-alert-days" class="form-control" value="30" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Chave de Licença</label>
+        <input type="text" id="sw-license-key" class="form-control" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" />
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="sw-notes" class="form-control" placeholder="Informações adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-software')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSoftware()">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Infrastructure Modal -->
+<div class="modal-overlay" id="modal-infra">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="infra-modal-title">Novo Ativo de Infraestrutura</div>
+      <button class="modal-close" onclick="closeModal('modal-infra')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="infra-id" />
+
+      <!-- Campos comuns a todos os tipos -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="infra-name" class="form-control" placeholder="Ex: Switch Core Andar 2" />
+        </div>
+        <div class="form-group">
+          <label>Categoria *</label>
+          <select id="infra-category" class="form-control" onchange="infraCategoryChanged()">
+            <option value="servidor">🖥️ Servidor</option>
+            <option value="switch">🔀 Switch</option>
+            <option value="roteador">📡 Roteador</option>
+            <option value="firewall">🛡️ Firewall</option>
+            <option value="nobreak">🔋 Nobreak / UPS</option>
+            <option value="access_point">📶 Access Point</option>
+            <option value="storage">💾 Storage / NAS</option>
+            <option value="cloud">☁️ Cloud / VPS</option>
+            <option value="link">🌐 Link / Provedor</option>
+            <option value="camera">📹 Câmera / CFTV</option>
+            <option value="outro">📦 Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>IP</label>
+          <input type="text" id="infra-ip" class="form-control" placeholder="192.168.1.1" />
+        </div>
+        <div class="form-group">
+          <label>Hostname / Nome de Rede</label>
+          <input type="text" id="infra-hostname" class="form-control" placeholder="sw-core-01" />
+        </div>
+      </div>
+
+      <!-- ── GRUPO: Servidor / Cloud / Storage ── -->
+      <div id="infra-fields-server" class="infra-field-group">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sistema Operacional</label>
+            <input type="text" id="infra-os" class="form-control" placeholder="Ubuntu 24.04 LTS" />
+          </div>
+          <div class="form-group">
+            <label>Provedor / Localização</label>
+            <input type="text" id="infra-provider" class="form-control" placeholder="AWS / Azure / Rack Sala TI" />
+          </div>
+        </div>
+        <div class="form-row col3">
+          <div class="form-group">
+            <label>CPU (cores)</label>
+            <input type="number" id="infra-cpu" class="form-control" placeholder="8" min="1" />
+          </div>
+          <div class="form-group">
+            <label>RAM (GB)</label>
+            <input type="number" id="infra-ram" class="form-control" placeholder="32" step="0.5" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Disco (GB)</label>
+            <input type="number" id="infra-disk" class="form-control" placeholder="1000" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GRUPO: Switch / Roteador / Firewall / AP ── -->
+      <div id="infra-fields-network" class="infra-field-group" style="display:none">
+        <div class="form-row col3">
+          <div class="form-group">
+            <label>Nº de Portas</label>
+            <input type="number" id="infra-ports" class="form-control" placeholder="24" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Velocidade</label>
+            <select id="infra-speed" class="form-control">
+              <option value="">—</option>
+              <option value="10/100">10/100 Mbps</option>
+              <option value="10/100/1000">Gigabit (1G)</option>
+              <option value="10G">10G SFP+</option>
+              <option value="25G">25G</option>
+              <option value="40G">40G</option>
+              <option value="100G">100G</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gerenciamento</label>
+            <select id="infra-mgmt" class="form-control">
+              <option value="">—</option>
+              <option value="gerenciavel">Gerenciável</option>
+              <option value="nao_gerenciavel">Não gerenciável</option>
+              <option value="smart">Smart / Web</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>VLAN Suporte</label>
+            <input type="text" id="infra-vlan" class="form-control" placeholder="Ex: 10, 20, 30" />
+          </div>
+          <div class="form-group">
+            <label>Firmware / Versão SW</label>
+            <input type="text" id="infra-firmware" class="form-control" placeholder="15.2(7)E3" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GRUPO: Nobreak / UPS ── -->
+      <div id="infra-fields-nobreak" class="infra-field-group" style="display:none">
+        <div class="form-row col3">
+          <div class="form-group">
+            <label>Potência (VA)</label>
+            <input type="number" id="infra-va" class="form-control" placeholder="1500" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Potência (Watts)</label>
+            <input type="number" id="infra-watts" class="form-control" placeholder="900" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Autonomia (min)</label>
+            <input type="number" id="infra-autonomia" class="form-control" placeholder="30" min="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Bateria</label>
+            <select id="infra-battery-type" class="form-control">
+              <option value="">—</option>
+              <option value="selada">Selada (VRLA)</option>
+              <option value="lithium">Lítio</option>
+              <option value="gel">Gel</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Última Troca de Bateria</label>
+            <input type="date" id="infra-battery-date" class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GRUPO: Link / Provedor ── -->
+      <div id="infra-fields-link" class="infra-field-group" style="display:none">
+        <div class="form-row col3">
+          <div class="form-group">
+            <label>Velocidade Download</label>
+            <input type="text" id="infra-dl" class="form-control" placeholder="500 Mbps" />
+          </div>
+          <div class="form-group">
+            <label>Velocidade Upload</label>
+            <input type="text" id="infra-ul" class="form-control" placeholder="200 Mbps" />
+          </div>
+          <div class="form-group">
+            <label>Tipo de Link</label>
+            <select id="infra-link-type" class="form-control">
+              <option value="">—</option>
+              <option value="fibra">Fibra óptica</option>
+              <option value="cabo">Cabo metálico</option>
+              <option value="radio">Rádio / Wireless</option>
+              <option value="satelite">Satélite</option>
+              <option value="4g5g">4G / 5G</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Operadora / ISP</label>
+            <input type="text" id="infra-isp" class="form-control" placeholder="Vivo Empresas" />
+          </div>
+          <div class="form-group">
+            <label>Número do Contrato</label>
+            <input type="text" id="infra-contract-num" class="form-control" placeholder="CTR-0001" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos finais comuns -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Custo Mensal (R$)</label>
+          <input type="number" id="infra-cost" class="form-control" placeholder="500,00" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Responsável</label>
+          <input type="text" id="infra-responsible" class="form-control" placeholder="João TI" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="infra-notes" class="form-control" placeholder="Localização no rack, número de patrimônio, etc..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-infra')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveInfra()">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="proj-modal-title">Novo Projeto</div>
+      <button class="modal-close" onclick="closeModal('modal-project')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="proj-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="proj-name" class="form-control" placeholder="Portal do Cliente" />
+        </div>
+        <div class="form-group">
+          <label>Responsável</label>
+          <input type="text" id="proj-responsible" class="form-control" placeholder="Maria Silva" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="proj-description" class="form-control" placeholder="Descreva o projeto..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="proj-status" class="form-control">
+            <option value="planejamento">Planejamento</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="pausado">Pausado</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Progresso (%)</label>
+          <input type="number" id="proj-progress" class="form-control" placeholder="0" min="0" max="100" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Início</label>
+          <input type="date" id="proj-start" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Previsão de término</label>
+          <input type="date" id="proj-end" class="form-control" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Repositório URL</label>
+          <input type="text" id="proj-repo" class="form-control" placeholder="https://github.com/..." />
+        </div>
+        <div class="form-group">
+          <label>URL em Produção</label>
+          <input type="text" id="proj-prod-url" class="form-control" placeholder="https://..." />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="proj-notes" class="form-control" placeholder="Informações adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-project')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProject()">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Script Modal -->
+<div class="modal-overlay" id="modal-script">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="sc-modal-title">Novo Script</div>
+      <button class="modal-close" onclick="closeModal('modal-script')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sc-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="sc-name" class="form-control" placeholder="Backup automático banco" />
+        </div>
+        <div class="form-group">
+          <label>Linguagem *</label>
+          <select id="sc-language" class="form-control">
+            <option value="python">Python</option>
+            <option value="bash">Bash</option>
+            <option value="sql">SQL</option>
+            <option value="javascript">JavaScript</option>
+            <option value="powershell">PowerShell</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Utilizado em</label>
+          <input type="text" id="sc-used-in" class="form-control" placeholder="Servidor de produção, cron job" />
+        </div>
+        <div class="form-group">
+          <label>Autor</label>
+          <input type="text" id="sc-author" class="form-control" placeholder="João TI" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tags (separadas por vírgula)</label>
+        <input type="text" id="sc-tags" class="form-control" placeholder="backup, banco, automação" />
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="sc-description" class="form-control" placeholder="O que esse script faz..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Código *</label>
+        <textarea id="sc-code" class="form-control" style="font-family:var(--font-mono);font-size:12px;min-height:180px" placeholder="# Insira o código aqui..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-script')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveScript()">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Technology Modal -->
+<div class="modal-overlay" id="modal-tech">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="tech-modal-title">Nova Tecnologia</div>
+      <button class="modal-close" onclick="closeModal('modal-tech')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tech-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="tech-name" class="form-control" placeholder="FastAPI" />
+        </div>
+        <div class="form-group">
+          <label>Categoria *</label>
+          <select id="tech-category" class="form-control">
+            <option value="backend">Backend</option>
+            <option value="frontend">Frontend</option>
+            <option value="banco">Banco de dados</option>
+            <option value="devops">DevOps</option>
+            <option value="mobile">Mobile</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Versão</label>
+          <input type="text" id="tech-version" class="form-control" placeholder="0.115.0" />
+        </div>
+        <div class="form-group">
+          <label>Docs URL</label>
+          <input type="text" id="tech-docs" class="form-control" placeholder="https://fastapi.tiangolo.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="tech-description" class="form-control" placeholder="Para que usamos essa tecnologia..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tech')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTechnology()">
+        <i class="fas fa-save"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Script View Modal -->
+<div class="modal-overlay" id="modal-script-view">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="scv-title">Visualizar Script</div>
+      <button class="modal-close" onclick="closeModal('modal-script-view')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+        <span id="scv-lang-tag"></span>
+        <span id="scv-used-in" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <p id="scv-description" style="font-size:13px;color:var(--text2);margin-bottom:12px"></p>
+      <div class="code-block" id="scv-code"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-script-view')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cli-modal-title">Novo Cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-client')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cli-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome / Razão Social *</label>
+          <input type="text" id="cli-name" class="form-control" placeholder="Empresa LTDA" />
+        </div>
+        <div class="form-group">
+          <label>CNPJ / CPF</label>
+          <input type="text" id="cli-doc" class="form-control" placeholder="00.000.000/0001-00" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contato (e-mail ou telefone)</label>
+          <input type="text" id="cli-contact" class="form-control" placeholder="contato@empresa.com" />
+        </div>
+        <div class="form-group">
+          <label>Responsável</label>
+          <input type="text" id="cli-responsible" class="form-control" placeholder="João Silva" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Serviço</label>
+          <select id="cli-service-type" class="form-control">
+            <option value="suporte">Suporte Técnico</option>
+            <option value="infra">Infraestrutura</option>
+            <option value="dev">Desenvolvimento</option>
+            <option value="consultoria">Consultoria</option>
+            <option value="cftv">CFTV / Segurança</option>
+            <option value="redes">Redes</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="cli-status" class="form-control">
+            <option value="ativo">Ativo</option>
+            <option value="prospecto">Prospecto</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="cli-notes" class="form-control" placeholder="Contrato, SLA, observações..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-client')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Invite Modal -->
+<div class="modal-overlay" id="modal-user-invite">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Adicionar Usuário</div>
+      <button class="modal-close" onclick="closeModal('modal-user-invite')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>E-mail *</label>
+        <input type="email" id="inv-email" class="form-control" placeholder="usuario@empresa.com" />
+      </div>
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="inv-name" class="form-control" placeholder="João Silva" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nível de Acesso</label>
+          <select id="inv-role" class="form-control">
+            <option value="user">Usuário Comum</option>
+            <option value="elevated">Usuário Elevado</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Senha inicial *</label>
+          <input type="password" id="inv-password" class="form-control" placeholder="Mínimo 6 caracteres" />
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text3);margin-top:4px">
+        <i class="fas fa-info-circle" style="color:var(--accent)"></i>
+        O usuário receberá um e-mail de confirmação. Compartilhe a senha inicial com ele para o primeiro acesso.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-user-invite')">Cancelar</button>
+      <button class="btn btn-primary" onclick="inviteUser()"><i class="fas fa-user-plus"></i> Criar Usuário</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Role Modal -->
+<div class="modal-overlay" id="modal-user-role">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Alterar Nível de Acesso</div>
+      <button class="modal-close" onclick="closeModal('modal-user-role')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="usr-edit-id" />
+      <div class="form-group">
+        <label>Usuário</label>
+        <input type="text" id="usr-edit-name" class="form-control" disabled style="opacity:0.6" />
+      </div>
+      <div class="form-group">
+        <label>Nível de Acesso</label>
+        <select id="usr-edit-role" class="form-control">
+          <option value="user">Usuário Comum</option>
+          <option value="elevated">Usuário Elevado</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-user-role')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUserRole()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- Credenciais (preenchidas via config.js ou inject-env.js no build) -->
+<script src="config.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUPABASE — inicialização
+// ═══════════════════════════════════════════════════════════
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ═══════════════════════════════════════════════════════════
+// AMBIENTE — detecção de produção (HTTPS) vs local (HTTP)
+// ═══════════════════════════════════════════════════════════
+const IS_CLOUD = location.protocol === 'https:';
+
+/** Retorna true para IPs de rede privada / loopback */
+function isPrivateIP(ip) {
+  return /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|::1$|localhost)/i
+    .test((ip ?? '').trim());
+}
+
+// Guard de configuração: exibe aviso inline se credenciais estiverem vazias
+if (!SUPABASE_URL?.startsWith('http') || (SUPABASE_KEY?.length ?? 0) < 20) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const screen = document.getElementById('auth-screen');
+    if (!screen) return;
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#ef444422;border:1px solid #ef4444;color:#fca5a5;padding:10px 18px;border-radius:8px;font-size:12px;text-align:center;max-width:360px;z-index:999';
+    warn.innerHTML = '<strong>⚠️ Configuração incompleta</strong><br>Defina <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> nas variáveis de ambiente da Vercel.';
+    screen.style.position = 'relative';
+    screen.appendChild(warn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function debounce(fn, delay) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  el.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR');
+}
+
+function fmtCurrency(v) {
+  if (v == null) return '—';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════════════
+// SUPABASE HELPER — wrapper com tratamento de erro unificado
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Executa uma query Supabase e trata erros de forma padronizada.
+ * @param {Promise} query - Promise retornada pelo Supabase client
+ * @param {boolean} silent - Se true, não exibe toast em erros esperados (ex: row not found)
+ * @returns {any|null} dados ou null em caso de erro
+ */
+async function sbQuery(query, silent = false) {
+  try {
+    const { data, error } = await query;
+    if (error) {
+      if (!silent) {
+        console.error('[Supabase]', error.message, error);
+        toast(error.message || 'Erro no banco de dados.', 'error');
+      }
+      return null;
+    }
+    return data;
+  } catch (e) {
+    if (!silent) {
+      console.error('[Supabase] Exceção:', e);
+      toast('Erro de conexão com o Supabase.', 'error');
+    }
+    return null;
+  }
+}
+
+// Retorna o user_id do usuário autenticado
+function uid() { return sb.auth.getUser ? currentUser?.id : null; }
+
+// ═══════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════
+let currentUser = null;   // objeto { id, email, user_metadata }
+
+// ═══════════════════════════════════════════════════════════
+// AUTH — Supabase Auth
+// ═══════════════════════════════════════════════════════════
+function clearLoginFields() {
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function doLogin() {
+  const email    = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-btn').innerHTML = '<div class="loader"></div> Entrando...';
+  document.getElementById('login-btn').disabled = true;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  document.getElementById('login-btn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+  document.getElementById('login-btn').disabled = false;
+
+  if (error) {
+    document.getElementById('login-error-msg').textContent =
+      error.message === 'Invalid login credentials'
+        ? 'E-mail ou senha incorretos.'
+        : error.message;
+    document.getElementById('login-error').style.display = 'flex';
+    document.getElementById('login-password').value = ''; // limpa senha mesmo com erro
+    return;
+  }
+
+  currentUser = data.user;
+  clearLoginFields(); // limpa ANTES de mostrar o app
+  showApp();
+}
+
+async function doLogout() {
+  stopMonitoring(); // cancela setInterval antes de limpar estado
+  await sb.auth.signOut();
+  currentUser = null;
+  // Reseta estado global
+  drawflowEditor = null;
+  topoEquipments = []; topoInfras = [];
+  _infraListVisible = false;
+  // Volta para login limpo
+  clearLoginFields();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  // Reseta página ativa para dashboard na próxima vez
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Restaurar sessão existente ao carregar a página ──────────
+async function restoreSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    showApp();
+  }
+}
+restoreSession();
+
+async function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+
+  const name = currentUser?.user_metadata?.full_name
+    || currentUser?.email?.split('@')[0]
+    || 'Usuário';
+  const initials = name[0].toUpperCase();
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-display-name').textContent = name;
+  document.getElementById('user-display-role').textContent =
+    currentUser?.user_metadata?.role || 'user';
+
+  navigate('dashboard');
+  loadSoftwareAlerts();
+  await checkAdminNav(); // aguarda resolução do role antes de qualquer navegação
+  startMonitoring();     // inicia ciclo de ping a cada 5 minutos
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const pageTitles = {
+  dashboard: 'Dashboard', equipments: 'Equipamentos',
+  softwares: 'Softwares', infrastructure: 'Infraestrutura',
+  projects: 'Projetos', scripts: 'Scripts e Códigos', technologies: 'Tecnologias',
+};
+const pageLoaders = {
+  dashboard: loadDashboard, equipments: loadEquipments,
+  softwares: loadSoftwares, infrastructure: loadInfra,
+  projects: loadProjects, scripts: loadScripts, technologies: loadTechnologies,
+};
+
+// Rastreia a página atual para limpezas ao trocar de aba
+let _currentPage = null;
+
+function navigate(page) {
+  // Ao sair da infra: fecha o drawer lateral se aberto
+  if (_currentPage === 'infrastructure' && page !== 'infrastructure' && _infraListVisible) {
+    toggleInfraList();
+  }
+
+  // Troca a aba ativa
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById(`page-${page}`);
+  if (pageEl) pageEl.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active');
+  });
+  document.getElementById('page-title').innerHTML =
+    pageTitles[page] + '<span id="page-subtitle"></span>';
+
+  _currentPage = page;
+  pageLoaders[page]?.();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const userId = currentUser?.id;
+  if (!userId) return;
+  const now = new Date().toISOString();
+  const in30 = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+
+  // Executa contagens em paralelo via Promise.all
+  const [
+    [eqTotal],  [eqAtivo], [eqManut],
+    [swTotal],  [swExpiring],
+    [infraTotal],[infraAtivo],
+    [projTotal], [projAndamento],
+    [scTotal],   [techTotal],
+    infraCost,   swCost,
+  ] = await Promise.all([
+    sb.from('equipamentos').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('equipamentos').select('*', { count:'exact', head:true }).eq('user_id', userId).eq('status','ativo').then(r => [r.count ?? 0]),
+    sb.from('equipamentos').select('*', { count:'exact', head:true }).eq('user_id', userId).eq('status','manutencao').then(r => [r.count ?? 0]),
+    sb.from('softwares').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('softwares').select('*', { count:'exact', head:true }).eq('user_id', userId).gte('valid_until', now).lte('valid_until', in30).then(r => [r.count ?? 0]),
+    sb.from('infraestrutura').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('infraestrutura').select('*', { count:'exact', head:true }).eq('user_id', userId).eq('is_active', true).then(r => [r.count ?? 0]),
+    sb.from('projetos').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('projetos').select('*', { count:'exact', head:true }).eq('user_id', userId).eq('status','em_andamento').then(r => [r.count ?? 0]),
+    sb.from('scripts').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('tecnologias').select('*', { count:'exact', head:true }).eq('user_id', userId).then(r => [r.count ?? 0]),
+    sb.from('infraestrutura').select('monthly_cost').eq('user_id', userId),
+    sb.from('softwares').select('cost_monthly').eq('user_id', userId),
+  ]);
+
+  const costInfra = (infraCost.data || []).reduce((s, r) => s + (r.monthly_cost || 0), 0);
+  const costSw    = (swCost.data   || []).reduce((s, r) => s + (r.cost_monthly || 0), 0);
+
+  const stats = [
+    { label:'Equipamentos Ativos',   value:eqAtivo,       icon:'fa-laptop',           color:'--accent', iconBg:'rgba(59,127,255,0.12)',  iconColor:'var(--accent)' },
+    { label:'Em Manutenção',         value:eqManut,        icon:'fa-tools',            color:'--yellow', iconBg:'rgba(245,158,11,0.12)',  iconColor:'var(--yellow)' },
+    { label:'Softwares',             value:swTotal,        icon:'fa-box-open',         color:'--purple', iconBg:'rgba(168,85,247,0.12)',  iconColor:'var(--purple)' },
+    { label:'Vencendo em 30 dias',   value:swExpiring,     icon:'fa-exclamation-triangle', color:'--red', iconBg:'rgba(239,68,68,0.12)', iconColor:'var(--red)' },
+    { label:'Servidores/Infra',      value:infraAtivo,     icon:'fa-server',           color:'--cyan',   iconBg:'rgba(6,182,212,0.12)',   iconColor:'var(--cyan)' },
+    { label:'Projetos em Andamento', value:projAndamento,  icon:'fa-project-diagram',  color:'--green',  iconBg:'rgba(34,197,94,0.12)',   iconColor:'var(--green)' },
+    { label:'Scripts Armazenados',   value:scTotal,        icon:'fa-code',             color:'--accent', iconBg:'rgba(59,127,255,0.12)',  iconColor:'var(--accent)' },
+    { label:'Tecnologias',           value:techTotal,      icon:'fa-microchip',        color:'--purple', iconBg:'rgba(168,85,247,0.12)',  iconColor:'var(--purple)' },
+  ];
+
+  document.getElementById('stats-grid').innerHTML = stats.map(s => `
+    <div class="stat-card" style="--card-accent:var(${s.color})">
+      <div class="stat-icon" style="background:${s.iconBg};color:${s.iconColor}">
+        <i class="fas ${s.icon}"></i>
+      </div>
+      <div class="stat-value">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`).join('');
+
+  // ── Analytics extra ──────────────────────────────────────
+  const eqAllData = await sbQuery(
+    sb.from('equipamentos').select('type,status').eq('user_id', userId).limit(500), true
+  ) || [];
+  const typeGroups = {};
+  let eqOnline = 0, eqOffline = 0;
+  for (const eq of eqAllData) {
+    const t = eq.type || 'Other';
+    typeGroups[t] = (typeGroups[t] || 0) + 1;
+    if (eq.status === 'ativo') eqOnline++; else eqOffline++;
+  }
+  const typeEntries = Object.entries(typeGroups).sort((a, b) => b[1] - a[1]);
+  const totalEqAll  = eqAllData.length;
+  const totalAtivos = eqTotal + infraTotal;
+
+  function makeSvgDonut(online, total) {
+    if (!total) return `<svg width="72" height="72" viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" fill="none" stroke="var(--bg3)" stroke-width="4"/></svg>`;
+    const pct  = online / total * 100;
+    const rest = 100 - pct;
+    return `<svg width="72" height="72" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="14" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+      <circle cx="18" cy="18" r="14" fill="none" stroke="var(--green)" stroke-width="4"
+        stroke-dasharray="${pct.toFixed(1)} ${rest.toFixed(1)}"
+        stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+    </svg>`;
+  }
+
+  document.getElementById('dashboard-analytics').innerHTML = `
+    <div class="stat-card" style="--card-accent:var(--accent)">
+      <div class="stat-icon" style="background:rgba(59,127,255,0.12);color:var(--accent)"><i class="fas fa-cubes"></i></div>
+      <div class="stat-value">${totalAtivos}</div>
+      <div class="stat-label">Total de Ativos</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">${eqTotal} equip · ${infraTotal} infra</div>
+    </div>
+    <div class="table-wrapper" style="padding:20px">
+      <div style="font-family:var(--font-head);font-weight:700;font-size:13px;margin-bottom:14px">Online / Offline</div>
+      <div style="display:flex;align-items:center;gap:18px">
+        <div style="position:relative;flex-shrink:0">
+          ${makeSvgDonut(eqOnline, totalEqAll)}
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${totalEqAll ? Math.round(eqOnline/totalEqAll*100) : 0}%</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
+            <span><strong>${eqOnline}</strong> Online</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
+            <span><strong>${eqOffline}</strong> Offline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrapper" style="padding:20px">
+      <div style="font-family:var(--font-head);font-weight:700;font-size:13px;margin-bottom:12px">Por Categoria</div>
+      ${totalEqAll === 0
+        ? '<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px 0">Nenhum equipamento cadastrado</div>'
+        : typeEntries.slice(0, 6).map(([type, count]) => {
+            const meta = getTypeMeta(type);
+            const pct  = Math.round(count / totalEqAll * 100);
+            return `<div style="margin-bottom:9px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+                <span style="display:flex;align-items:center;gap:6px">
+                  <i class="fas ${meta.icon}" style="color:${meta.color};width:12px;text-align:center"></i>${meta.label}
+                </span>
+                <span style="color:var(--text3)">${count}</span>
+              </div>
+              <div style="background:var(--bg3);border-radius:4px;height:5px">
+                <div style="background:${meta.color};width:${pct}%;height:5px;border-radius:4px;transition:width .5s"></div>
+              </div>
+            </div>`;
+          }).join('')}
+    </div>`;
+
+  document.getElementById('dashboard-tables').innerHTML = `
+    <div class="table-wrapper">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-weight:700;font-size:14px">💰 Custo Mensal</div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--text2)">Infraestrutura</span>
+            <span style="font-weight:600">${fmtCurrency(costInfra)}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%;background:linear-gradient(90deg,var(--cyan),var(--accent))"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--text2)">Softwares</span>
+            <span style="font-weight:600">${fmtCurrency(costSw)}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:40%;background:linear-gradient(90deg,var(--purple),var(--accent2))"></div></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;justify-content:space-between">
+          <span style="font-weight:600">Total</span>
+          <span style="font-weight:800;font-family:var(--font-head);font-size:18px;color:var(--accent)">${fmtCurrency(costInfra + costSw)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-family:var(--font-head);font-weight:700;font-size:14px">📊 Resumo Geral</div>
+      <div style="padding:12px 0">
+        ${[['Equipamentos',eqTotal,eqAtivo,'var(--accent)'],['Softwares',swTotal,swTotal-swExpiring,'var(--purple)'],
+           ['Infraestrutura',infraTotal,infraAtivo,'var(--cyan)'],['Projetos',projTotal,projAndamento,'var(--green)']].map(
+          ([label,total,active,color]) => `
+          <div style="padding:10px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+            <div style="width:4px;height:36px;background:${color};border-radius:2px;flex-shrink:0"></div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:600">${label}</div><div style="font-size:11px;color:var(--text3)">${active} de ${total} ativos</div></div>
+            <div style="font-family:var(--font-head);font-size:20px;font-weight:800;color:${color}">${total}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// EQUIPAMENTOS — Supabase: tabela "equipamentos"
+// ═══════════════════════════════════════════════════════════
+const statusBadge = {
+  ativo:       '<span class="badge badge-green">● Ativo</span>',
+  inativo:     '<span class="badge badge-gray">● Inativo</span>',
+  manutencao:  '<span class="badge badge-yellow">● Manutenção</span>',
+  descartado:  '<span class="badge badge-red">● Descartado</span>',
+};
+
+async function loadEquipments() {
+  const search = document.getElementById('eq-search').value.trim();
+  const status = document.getElementById('eq-status-filter').value;
+  const uid = currentUser?.id;
+
+  let q = sb.from('equipamentos').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(200);
+  if (status) q = q.eq('status', status);
+  if (search) q = q.or(`name.ilike.%${search}%,patrimony.ilike.%${search}%,responsible_user.ilike.%${search}%`);
+
+  const data = await sbQuery(q);
+  lastEquipmentsData = data || [];
+  const tbody = document.getElementById('eq-tbody');
+  const empty = document.getElementById('eq-empty');
+  if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(eq => `
+    <tr>
+      <td><strong>${eq.name}</strong>${eq.brand ? `<div style="font-size:11px;color:var(--text3)">${eq.brand} ${eq.model || ''}</div>` : ''}</td>
+      <td>${eq.type}</td>
+      <td class="td-mono">${eq.patrimony || '—'}</td>
+      <td>${eq.responsible_user || '—'}</td>
+      <td>${eq.location || '—'}</td>
+      <td>${statusBadge[eq.status] || eq.status}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editEquipment(${eq.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEquipment(${eq.id},'${eq.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+function openEquipmentModal(eq = null) {
+  document.getElementById('eq-modal-title').textContent = eq ? 'Editar Equipamento' : 'Novo Equipamento';
+  ['eq-id','eq-name','eq-type','eq-patrimony','eq-serial','eq-brand','eq-model','eq-responsible','eq-location','eq-status','eq-purchase','eq-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    const key = { 'eq-id':'id','eq-name':'name','eq-type':'type','eq-patrimony':'patrimony','eq-serial':'serial_number',
+      'eq-brand':'brand','eq-model':'model','eq-responsible':'responsible_user','eq-location':'location',
+      'eq-status':'status','eq-purchase':'purchase_date','eq-notes':'notes' }[id];
+    el.value = eq?.[key] ?? (id === 'eq-status' ? 'ativo' : id === 'eq-type' ? 'notebook' : '');
+    if (key === 'purchase_date' && eq?.[key]) el.value = eq[key].slice(0,10);
+  });
+  openModal('modal-equipment');
+}
+
+async function editEquipment(id) {
+  const data = await sbQuery(sb.from('equipamentos').select('*').eq('id', id).single());
+  if (data) openEquipmentModal(data);
+}
+
+async function saveEquipment() {
+  const id = document.getElementById('eq-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('eq-name').value,
+    type: document.getElementById('eq-type').value,
+    patrimony: document.getElementById('eq-patrimony').value || null,
+    serial_number: document.getElementById('eq-serial').value || null,
+    brand: document.getElementById('eq-brand').value || null,
+    model: document.getElementById('eq-model').value || null,
+    responsible_user: document.getElementById('eq-responsible').value || null,
+    location: document.getElementById('eq-location').value || null,
+    status: document.getElementById('eq-status').value,
+    purchase_date: document.getElementById('eq-purchase').value || null,
+    notes: document.getElementById('eq-notes').value || null,
+  };
+  const q = id
+    ? sb.from('equipamentos').update(payload).eq('id', id).select()
+    : sb.from('equipamentos').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) {
+    auditLog(id ? 'update' : 'insert', 'equipamentos', res[0]?.id || id, { name: payload.name, type: payload.type, status: payload.status });
+    toast(id ? 'Equipamento atualizado!' : 'Equipamento cadastrado!');
+    closeModal('modal-equipment');
+    openEquipmentModal();
+    loadEquipments();
+  }
+}
+
+async function deleteEquipment(id, name) {
+  if (!confirm(`Remover o equipamento "${name}"?`)) return;
+  const res = await sbQuery(sb.from('equipamentos').delete().eq('id', id).select());
+  if (res !== null) { auditLog('delete', 'equipamentos', id, { name }); toast('Equipamento removido.', 'info'); loadEquipments(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOFTWARES — tabela "softwares"
+// ═══════════════════════════════════════════════════════════
+async function loadSoftwareAlerts() {
+  const now = new Date().toISOString();
+  const in30 = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+  const data = await sbQuery(
+    sb.from('softwares').select('*').eq('user_id', currentUser?.id).gte('valid_until', now).lte('valid_until', in30),
+    true
+  );
+  const badge = document.getElementById('sw-alert-badge');
+  if (data?.length) { badge.style.display = 'block'; badge.textContent = data.length; }
+}
+
+async function loadSoftwares() {
+  const search = document.getElementById('sw-search').value.trim();
+  let q = sb.from('softwares').select('*').eq('user_id', currentUser?.id).order('name').limit(200);
+  if (search) q = q.or(`name.ilike.%${search}%,vendor.ilike.%${search}%`);
+  const data = await sbQuery(q);
+
+  // Alertas de vencimento
+  const now = new Date(); const in30 = new Date(Date.now() + 30*24*60*60*1000);
+  const alerts = (data || []).filter(sw => sw.valid_until && new Date(sw.valid_until) <= in30 && new Date(sw.valid_until) >= now);
+  const alertsBox = document.getElementById('sw-alerts-box');
+  alertsBox.innerHTML = alerts.length ? `
+    <div class="alert alert-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div><strong>${alerts.length} software(s) com licença próxima do vencimento:</strong>
+        ${alerts.map(a => { const d = Math.ceil((new Date(a.valid_until)-now)/86400000);
+          return `<div style="margin-top:4px;font-size:12px">${a.name} — vence em <strong>${d} dias</strong></div>`; }).join('')}
+      </div>
+    </div>` : '';
+
+  const tbody = document.getElementById('sw-tbody');
+  const empty = document.getElementById('sw-empty');
+  if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(sw => {
+    let expiryBadge = fmtDate(sw.valid_until);
+    if (sw.valid_until) {
+      const days = Math.ceil((new Date(sw.valid_until) - now) / 86400000);
+      if (days < 0) expiryBadge = `<span class="badge badge-red">Vencido há ${Math.abs(days)}d</span>`;
+      else if (days <= 30) expiryBadge = `<span class="badge badge-yellow">Vence em ${days}d</span>`;
+      else expiryBadge = `<span class="badge badge-green">${fmtDate(sw.valid_until)}</span>`;
+    }
+    return `<tr>
+      <td><strong>${sw.name}</strong></td>
+      <td class="td-mono">${sw.version || '—'}</td>
+      <td>${sw.license_type || '—'}</td>
+      <td>${sw.vendor || '—'}</td>
+      <td>${expiryBadge}</td>
+      <td>${sw.is_active ? '<span class="badge badge-green">Ativo</span>' : '<span class="badge badge-gray">Inativo</span>'}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editSoftware(${sw.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSoftware(${sw.id},'${sw.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </td></tr>`;
+  }).join('');
+}
+
+function openSoftwareModal(sw = null) {
+  document.getElementById('sw-modal-title').textContent = sw ? 'Editar Software' : 'Novo Software';
+  document.getElementById('sw-id').value = sw?.id || '';
+  document.getElementById('sw-name').value = sw?.name || '';
+  document.getElementById('sw-version').value = sw?.version || '';
+  document.getElementById('sw-license-type').value = sw?.license_type || 'assinatura';
+  document.getElementById('sw-vendor').value = sw?.vendor || '';
+  document.getElementById('sw-valid-until').value = sw?.valid_until ? sw.valid_until.slice(0,10) : '';
+  document.getElementById('sw-cost').value = sw?.cost_monthly || '';
+  document.getElementById('sw-max-inst').value = sw?.max_installations || '';
+  document.getElementById('sw-alert-days').value = sw?.alert_days_before || 30;
+  document.getElementById('sw-license-key').value = sw?.license_key || '';
+  document.getElementById('sw-notes').value = sw?.notes || '';
+  openModal('modal-software');
+}
+
+async function editSoftware(id) {
+  const data = await sbQuery(sb.from('softwares').select('*').eq('id', id).single());
+  if (data) openSoftwareModal(data);
+}
+
+async function saveSoftware() {
+  const id = document.getElementById('sw-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('sw-name').value,
+    version: document.getElementById('sw-version').value || null,
+    license_type: document.getElementById('sw-license-type').value,
+    vendor: document.getElementById('sw-vendor').value || null,
+    valid_until: document.getElementById('sw-valid-until').value || null,
+    cost_monthly: parseFloat(document.getElementById('sw-cost').value) || null,
+    max_installations: parseInt(document.getElementById('sw-max-inst').value) || null,
+    alert_days_before: parseInt(document.getElementById('sw-alert-days').value) || 30,
+    license_key: document.getElementById('sw-license-key').value || null,
+    notes: document.getElementById('sw-notes').value || null,
+  };
+  const q = id ? sb.from('softwares').update(payload).eq('id', id).select() : sb.from('softwares').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Software atualizado!' : 'Software cadastrado!'); closeModal('modal-software'); openSoftwareModal(); loadSoftwares(); loadSoftwareAlerts(); }
+}
+
+async function deleteSoftware(id, name) {
+  if (!confirm(`Remover o software "${name}"?`)) return;
+  const res = await sbQuery(sb.from('softwares').delete().eq('id', id));
+  if (res !== null) { toast('Software removido.', 'info'); loadSoftwares(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOPOLOGY MAP — tabela "topologia" no Supabase
+// ═══════════════════════════════════════════════════════════
+const EQ_TYPE_META = {
+  Server:      { icon:'fa-server',               color:'#3b7fff', label:'Servidor'    },
+  Notebook:    { icon:'fa-laptop',               color:'#a855f7', label:'Notebook'    },
+  Desktop:     { icon:'fa-desktop',              color:'#8b5cf6', label:'Desktop'     },
+  Switch:      { icon:'fa-network-wired',        color:'#06b6d4', label:'Switch'      },
+  Router:      { icon:'fa-wifi',                 color:'#22c55e', label:'Roteador'    },
+  Firewall:    { icon:'fa-shield-halved',        color:'#ef4444', label:'Firewall'    },
+  Printer:     { icon:'fa-print',               color:'#f59e0b', label:'Impressora'  },
+  Monitor:     { icon:'fa-tv',                   color:'#64748b', label:'Monitor'     },
+  Tablet:      { icon:'fa-tablet-screen-button', color:'#ec4899', label:'Tablet'      },
+  Mobile:      { icon:'fa-mobile-screen',        color:'#ec4899', label:'Celular'     },
+  Nobreak:     { icon:'fa-battery-full',         color:'#f59e0b', label:'Nobreak'    },
+  Storage:     { icon:'fa-hard-drive',           color:'#06b6d4', label:'Storage'    },
+  Cloud:       { icon:'fa-cloud',               color:'#5b9eff', label:'Cloud'       },
+  AccessPoint: { icon:'fa-broadcast-tower',      color:'#22c55e', label:'Access Point'},
+  Link:        { icon:'fa-ethernet',             color:'#0ea5e9', label:'Link'        },
+  Camera:      { icon:'fa-video',               color:'#f43f5e', label:'Câmera'      },
+  Other:       { icon:'fa-cube',                color:'#64748b', label:'Outro'       },
+};
+const STATUS_COLOR = { ativo:'#22c55e', manutencao:'#f59e0b', inativo:'#64748b', descartado:'#ef4444' };
+
+let drawflowEditor = null;
+let topoEquipments = [], topoInfras = [];
+
+async function loadInfra() {
+  // Só inicializa quando a aba está efetivamente ativa no DOM
+  const page = document.getElementById('page-infrastructure');
+  if (!page?.classList.contains('active')) return;
+
+  if (!drawflowEditor) initDrawflow();
+  await loadTopoPanel();
+  await topoLoad(true);
+  // Dispara verificação inicial silenciosa assim que os dados estão prontos
+  runConnectivityCheck(true);
+}
+
+function initDrawflow() {
+  const container = document.getElementById('drawflow');
+
+  // Limpa instância anterior para não acumular event listeners
+  if (drawflowEditor) {
+    try { drawflowEditor.clear?.(); } catch (_) {}
+    container.innerHTML = '';
+    drawflowEditor = null;
+  }
+
+  drawflowEditor = new Drawflow(container, null, null);
+  drawflowEditor.reroute = true;
+  drawflowEditor.reroute_fix_curvature = true;
+  drawflowEditor.force_first_input = false;
+  drawflowEditor.editor_mode = 'edit';
+  drawflowEditor.zoom_max = 3;
+  drawflowEditor.zoom_min = 0.3;
+  drawflowEditor.zoom_value = 0.1;
+  drawflowEditor.start();
+
+  // Remove SVGs órfãos que o Drawflow eventualmente injeta fora do container
+  document.querySelectorAll('body > svg').forEach(el => el.remove());
+
+  drawflowEditor.on('nodeCreated', () => {
+    const h = document.getElementById('topo-hint'); if (h) h.style.display = 'none';
+  });
+  drawflowEditor.on('nodeRemoved', () => {
+    const nodes = Object.keys(drawflowEditor.export()?.drawflow?.Home?.data || {});
+    const h = document.getElementById('topo-hint');
+    if (h) h.style.display = nodes.length ? 'none' : 'block';
+  });
+}
+
+async function loadTopoPanel() {
+  const uid = currentUser?.id;
+  const [eqData, infraData] = await Promise.all([
+    sbQuery(sb.from('equipamentos').select('*').eq('user_id', uid).limit(500), true),
+    sbQuery(sb.from('infraestrutura').select('*').eq('user_id', uid).limit(500), true),
+  ]);
+  topoEquipments = eqData || [];
+  topoInfras = infraData || [];
+  const all = [
+    ...topoEquipments.map(e => ({ ...e, _source:'equipment' })),
+    ...topoInfras.map(i => ({ ...i, _source:'infra', type: INFRA_CAT_TO_TYPE[i.category] || i.category })),
+  ];
+  renderTopoPanelList(all);
+}
+
+function renderTopoPanelList(items) {
+  const list = document.getElementById('topo-panel-list');
+  if (!items.length) {
+    list.innerHTML = `<div class="topo-panel-empty"><i class="fas fa-laptop-code"></i>Nenhum equipamento.<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openInfraModal()">+ Cadastrar</button></div>`;
+    return;
+  }
+  const groups = {};
+  for (const item of items) {
+    const type = item.type || 'Other';
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(item);
+  }
+  const order = ['Server','Switch','Router','Firewall','Cloud','Storage','Desktop','Notebook','Printer','Monitor','Nobreak','AccessPoint','Link','Camera','Tablet','Mobile','Other'];
+  const sortedKeys = [...new Set([...order, ...Object.keys(groups)])].filter(k => groups[k]);
+  let html = '';
+  for (const type of sortedKeys) {
+    const meta = getTypeMeta(type);
+    html += `<div class="topo-group-label"><i class="fas ${meta.icon}" style="color:${meta.color};font-size:10px"></i>${meta.label}</div>`;
+    for (const item of groups[type]) {
+      const itemStatus = item._source === 'infra' ? (item.is_active !== false ? 'ativo' : 'inativo') : (item.status || 'ativo');
+      const statusColor = STATUS_COLOR[itemStatus] || STATUS_COLOR.inativo;
+      const dragData = JSON.stringify({ id:item.id, name:item.name, type, status:itemStatus, ip_address:item.ip_address||null, hostname:item.hostname||null, _source:item._source, online_status: item.online_status ?? null }).replace(/'/g,"&apos;");
+      // Live connectivity dot: só para infra com IP cadastrado
+      const hasIP = item._source === 'infra' && item.ip_address;
+      const liveCls  = hasIP ? (item.online_status === true ? 'online' : item.online_status === false ? 'offline' : '') : '';
+      const liveTip  = hasIP ? (item.online_status === true ? 'Online' : item.online_status === false ? 'Offline' : 'Não verificado') : '';
+      const liveDot  = hasIP ? `<div class="live-dot ${liveCls}" title="${liveTip}"></div>` : '';
+      const infraId  = item._source === 'infra' ? `data-infra-id="${item.id}"` : '';
+      html += `<div class="topo-item" draggable="true" data-eq='${dragData}' ${infraId} ondragstart="topoDragStart(event,this)" title="${item.name}">
+        <div class="topo-item-icon" style="background:${meta.color}22;color:${meta.color}"><i class="fas ${meta.icon}"></i></div>
+        <div class="topo-item-info"><div class="topo-item-name">${item.name}</div><div class="topo-item-type" style="color:${statusColor}">● ${itemStatus}</div></div>
+        ${liveDot}</div>`;
+    }
+  }
+  list.innerHTML = html;
+}
+
+function topoFilterItems() {
+  const q = document.getElementById('topo-search').value.toLowerCase().trim();
+  const all = [
+    ...topoEquipments.map(e => ({ ...e, _source:'equipment' })),
+    ...topoInfras.map(i => ({ ...i, _source:'infra', type: INFRA_CAT_TO_TYPE[i.category] || i.category })),
+  ];
+  renderTopoPanelList(q ? all.filter(i => i.name.toLowerCase().includes(q) || (i.type||'').toLowerCase().includes(q)) : all);
+}
+
+let _draggedEqData = null;
+function topoDragStart(event, el) {
+  try { _draggedEqData = JSON.parse(el.dataset.eq); event.dataTransfer.setData('text/plain', el.dataset.eq); }
+  catch(e) { console.warn(e); }
+}
+
+function topoDrop(event) {
+  event.preventDefault();
+  let eq = _draggedEqData;
+  if (!eq) try { eq = JSON.parse(event.dataTransfer.getData('text/plain')); } catch(e) { return; }
+  _draggedEqData = null;
+  if (!eq || !drawflowEditor) return;
+  const rect = document.getElementById('drawflow').getBoundingClientRect();
+  const zoom = drawflowEditor.zoom;
+  addEquipmentNode(eq,
+    (event.clientX - rect.left - drawflowEditor.canvas_x) / zoom,
+    (event.clientY - rect.top  - drawflowEditor.canvas_y) / zoom
+  );
+}
+
+function addEquipmentNode(eq, x, y) {
+  if (!drawflowEditor) return;
+  const meta = getTypeMeta(eq.type);
+  const sc = STATUS_COLOR[eq.status] || STATUS_COLOR.inativo;
+  // Cor do live-dot: verde/vermelho se já verificado, cinza se desconhecido
+  const liveColor = eq.online_status === true ? '#22c55e' : eq.online_status === false ? '#ef4444' : '#475569';
+  const liveTip   = eq.online_status === true ? 'Online' : eq.online_status === false ? 'Offline' : 'Não verificado';
+  const showLive  = eq._source === 'infra' && eq.ip_address;
+  drawflowEditor.addNode('equipment', 1, 1, x, y, 'equipment-node', { equipment: eq },
+    `<div class="df-eq-node"><div class="df-eq-icon" style="background:${meta.color}22;color:${meta.color}"><i class="fas ${meta.icon}"></i></div>
+    <div class="df-eq-body"><div class="df-eq-name">${eq.name}</div>
+    <div class="df-eq-meta">
+      <span class="df-eq-status" style="background:${sc}"></span><span>${meta.label}</span>
+      ${showLive ? `<span class="df-live-dot" style="width:6px;height:6px;border-radius:50%;background:${liveColor};display:inline-block;margin-left:4px;flex-shrink:0" title="${liveTip}"></span>` : ''}
+    </div>
+    ${eq.ip_address||eq.hostname ? `<div class="df-eq-ip">${eq.ip_address||eq.hostname}</div>` : ''}</div></div>`
+  );
+}
+
+function topoZoomIn()  { drawflowEditor?.zoom_in(); }
+function topoZoomOut() { drawflowEditor?.zoom_out(); }
+function topoFit()     { if (!drawflowEditor) return; drawflowEditor.zoom_reset(); drawflowEditor.canvas_x = 0; drawflowEditor.canvas_y = 0; drawflowEditor.precanvas.style.transform = 'translate(0px,0px) scale(1)'; drawflowEditor.zoom = 1; }
+
+/**
+ * salvarLayoutMapa()
+ * Exporta o JSON do Drawflow e salva na tabela "topologia" do Supabase.
+ * Usa upsert (insert + on conflict update) pelo campo user_id.
+ */
+async function salvarLayoutMapa() {
+  if (!drawflowEditor) { toast('Mapa não inicializado.', 'error'); return; }
+  const btn = document.getElementById('topo-save-btn');
+  if (btn) { btn.innerHTML = '<div class="loader"></div>'; btn.disabled = true; }
+
+  const payload = {
+    user_id: currentUser.id,
+    name: 'Topologia Principal',
+    drawflow_data: JSON.stringify(drawflowEditor.export()),
+  };
+
+  const { error } = await sb.from('topologia').upsert(payload, { onConflict: 'user_id' });
+  if (btn) { btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Salvar Mapa'; btn.disabled = false; }
+  if (error) { toast(error.message, 'error'); return; }
+  toast('Mapa salvo com sucesso! ✓');
+}
+
+/**
+ * sanitizeDrawflowData()
+ * Valida e corrige o JSON antes de passar ao Drawflow.import().
+ * Evita pos_x undefined e coordenadas NaN que corrompem conexões SVG.
+ */
+function sanitizeDrawflowData(raw) {
+  try {
+    const home = raw?.drawflow?.Home?.data;
+    if (!home) return raw;
+    for (const id of Object.keys(home)) {
+      const node = home[id];
+      if (!node || typeof node !== 'object') { delete home[id]; continue; }
+      // Garante posições numéricas finitas
+      node.pos_x = isFinite(Number(node.pos_x)) ? Number(node.pos_x) : 100;
+      node.pos_y = isFinite(Number(node.pos_y)) ? Number(node.pos_y) : 100;
+      // Garante estrutura mínima de ports
+      if (!node.inputs  || typeof node.inputs  !== 'object') node.inputs  = { input_1:  { connections: [] } };
+      if (!node.outputs || typeof node.outputs !== 'object') node.outputs = { output_1: { connections: [] } };
+      // Remove conexões com nó destino/origem inexistente no mesmo grafo
+      for (const port of Object.values(node.outputs)) {
+        if (Array.isArray(port.connections)) {
+          port.connections = port.connections.filter(c => home[c.node] !== undefined);
+        }
+      }
+      for (const port of Object.values(node.inputs)) {
+        if (Array.isArray(port.connections)) {
+          port.connections = port.connections.filter(c => home[c.node] !== undefined);
+        }
+      }
+    }
+  } catch (e) { console.warn('[sanitizeDrawflowData]', e.message); }
+  return raw;
+}
+
+/**
+ * topoLoad()
+ * Lê o JSON salvo na tabela "topologia" do Supabase e importa no Drawflow.
+ * Aguarda dois frames de animação antes de redesenhar conexões para garantir
+ * que os nós estejam pintados no DOM e getBoundingClientRect() retorne valores reais.
+ */
+async function topoLoad(silent = false) {
+  if (!drawflowEditor) return;
+  const data = await sbQuery(
+    sb.from('topologia').select('drawflow_data').eq('user_id', currentUser.id).maybeSingle(),
+    true
+  );
+  if (!data?.drawflow_data) { if (!silent) toast('Nenhum mapa salvo.', 'info'); return; }
+  try {
+    const parsed = sanitizeDrawflowData(JSON.parse(data.drawflow_data));
+    const nodeIds = Object.keys(parsed?.drawflow?.Home?.data || {});
+
+    // Importa nós — conexões SVG são calculadas aqui com layout ainda não pintado
+    drawflowEditor.import(parsed);
+
+    // Aguarda dois frames: 1º o browser cria os elementos, 2º calcula o layout
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    // Redesenha conexões com coordenadas reais do DOM
+    for (const id of nodeIds) {
+      try { drawflowEditor.updateConnectionNodes('node-' + id); } catch (_) {}
+    }
+
+    const h = document.getElementById('topo-hint');
+    if (h) h.style.display = nodeIds.length ? 'none' : 'block';
+    if (!silent) toast('Mapa carregado!');
+  } catch (e) {
+    console.error('[topoLoad]', e);
+    if (!silent) toast('Erro ao importar mapa: ' + e.message, 'error');
+  }
+}
+
+async function topoClear() {
+  if (!confirm('Limpar todo o mapa? Esta ação não pode ser desfeita.')) return;
+  if (!drawflowEditor) return;
+  drawflowEditor.clearModuleSelected();
+  const h = document.getElementById('topo-hint'); if (h) h.style.display = 'block';
+  await sb.from('topologia').delete().eq('user_id', currentUser.id);
+  toast('Mapa limpo.', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MONITORAMENTO DE CONECTIVIDADE — Ping/Check de IPs
+// ═══════════════════════════════════════════════════════════
+let _monitorInterval = null;
+let _monitorRunning  = false;
+const MONITOR_INTERVAL_MIN = 5;   // minutos entre verificações automáticas
+
+/**
+ * Verifica acessibilidade de um IP/hostname.
+ *
+ * Estratégia por ambiente:
+ *  • HTTP local  → fetch no-cors direto (acessa rede interna do usuário)
+ *  • HTTPS nuvem + IP privado → retorna null ("indisponível em nuvem")
+ *  • HTTPS nuvem + IP público → chama Edge Function ping-check do Supabase
+ *
+ * Retorna: true (online) | false (offline) | null (não verificável)
+ */
+async function pingDevice(ip) {
+  if (!ip?.trim()) return null;
+  const target = ip.trim().replace(/^https?:\/\//, '').split('/')[0];
+
+  // Em nuvem (HTTPS): IPs privados são inacessíveis — nem tenta, evita ERR_CONNECTION_REFUSED
+  if (IS_CLOUD && isPrivateIP(target)) return null;
+
+  // Em nuvem (HTTPS): IPs públicos → delega à Edge Function (evita mixed-content)
+  if (IS_CLOUD) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ping-check`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ips: [target] }),
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.results?.[0]?.online ?? null;
+    } catch { return null; }
+  }
+
+  // HTTP local: fetch direto com no-cors, timeout 3s
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), 3000);
+  try {
+    await fetch(`http://${target}`, {
+      method: 'HEAD', mode: 'no-cors', cache: 'no-store',
+      signal: controller.signal,
+    });
+    clearTimeout(tid);
+    return true;
+  } catch (e) {
+    clearTimeout(tid);
+    return false;
+  }
+}
+
+/**
+ * Verifica conectividade de todos os ativos de infra com IP cadastrado.
+ * Executa em lotes de 3 para não saturar a rede local.
+ * Persiste resultado no Supabase e atualiza indicadores visuais.
+ */
+async function runConnectivityCheck(silent = true) {
+  if (_monitorRunning) return;
+  _monitorRunning = true;
+  const btn = document.getElementById('btn-ping');
+  if (btn) btn.disabled = true;
+  setMonitorBadge('running', 'Verificando...');
+
+  const targets = topoInfras.filter(i => i.ip_address?.trim());
+  if (!targets.length) {
+    _monitorRunning = false;
+    if (btn) btn.disabled = false;
+    setMonitorBadge('idle', 'Nenhum IP cadastrado');
+    return;
+  }
+
+  // Em nuvem: IPs privados não são verificáveis — exibe aviso imediato e encerra
+  if (IS_CLOUD && targets.every(i => isPrivateIP(i.ip_address))) {
+    _monitorRunning = false;
+    if (btn) btn.disabled = false;
+    setMonitorBadge('cloud', 'IPs locais — indisponível em nuvem');
+    if (!silent) toast('Monitoramento de IPs privados requer acesso local (HTTP). Use um Cloudflare Tunnel ou acesse via localhost.', 'info');
+    return;
+  }
+
+  const BATCH = 3;
+  const results = [];
+  for (let i = 0; i < targets.length; i += BATCH) {
+    const batch = targets.slice(i, i + BATCH);
+    const checks = await Promise.all(batch.map(async item => {
+      const online = await pingDevice(item.ip_address);
+      return { id: item.id, online, _private: isPrivateIP(item.ip_address) };
+    }));
+    results.push(...checks);
+    await new Promise(r => setTimeout(r, 80)); // yield para não travar a UI
+  }
+
+  // Persiste apenas resultados verificáveis (online !== null) no Supabase
+  const now = new Date().toISOString();
+  await Promise.all(
+    results
+      .filter(r => r.online !== null)
+      .map(r =>
+        sb.from('infraestrutura')
+          .update({ online_status: r.online, last_checked_at: now })
+          .eq('id', r.id)
+          .then(({ error }) => { if (error) console.warn('[Monitor]', r.id, error.message); })
+      )
+  );
+
+  // Atualiza cache local
+  for (const r of results) {
+    const item = topoInfras.find(i => i.id === r.id);
+    if (item) item.online_status = r.online;
+  }
+
+  updateMonitoringUI(results);
+
+  const onlineCount   = results.filter(r => r.online === true).length;
+  const offlineCount  = results.filter(r => r.online === false).length;
+  const unknownCount  = results.filter(r => r.online === null).length;
+
+  let badgeText = `${onlineCount} online · ${offlineCount} offline`;
+  if (unknownCount > 0) badgeText += ` · ${unknownCount} indispon.`;
+  setMonitorBadge('done', badgeText);
+
+  if (!silent) {
+    const msg = unknownCount > 0
+      ? `Ping: ${onlineCount} online, ${offlineCount} offline, ${unknownCount} IPs locais não verificáveis em nuvem`
+      : `Ping concluído: ${onlineCount} online, ${offlineCount} offline`;
+    toast(msg, unknownCount > 0 ? 'info' : 'success');
+  }
+
+  _monitorRunning = false;
+  if (btn) btn.disabled = false;
+}
+
+/**
+ * Atualiza live-dots no painel lateral e os indicadores dentro dos nós Drawflow.
+ */
+function updateMonitoringUI(results) {
+  // Painel lateral — live-dot por data-infra-id
+  for (const { id, online } of results) {
+    if (online === null) continue;
+    const dot = document.querySelector(`.topo-item[data-infra-id="${id}"] .live-dot`);
+    if (dot) {
+      dot.className = 'live-dot ' + (online ? 'online' : 'offline');
+      dot.title     = online ? 'Online' : 'Offline';
+    }
+  }
+
+  // Nós Drawflow — df-live-dot via ID interno do Drawflow
+  const nodeMap = drawflowEditor?.export()?.drawflow?.Home?.data || {};
+  for (const [dfId, nodeData] of Object.entries(nodeMap)) {
+    const eq = nodeData.data?.equipment;
+    if (!eq || eq._source !== 'infra') continue;
+    const r = results.find(x => x.id === eq.id);
+    if (!r || r.online === null) continue;
+    const el = document.getElementById('node-' + dfId);
+    if (!el) continue;
+    // Atualiza dot de status estático (fallback se df-live-dot não existir)
+    const liveDot = el.querySelector('.df-live-dot');
+    if (liveDot) {
+      liveDot.style.background = r.online ? '#22c55e' : '#ef4444';
+      liveDot.title = r.online ? 'Online' : 'Offline';
+    }
+    // Pulso visual momentâneo no ícone principal
+    const icon = el.querySelector('.df-eq-icon');
+    if (icon) {
+      icon.style.boxShadow = r.online ? '0 0 8px #22c55e66' : '0 0 8px #ef444466';
+      setTimeout(() => { if (icon) icon.style.boxShadow = ''; }, 2000);
+    }
+  }
+}
+
+function setMonitorBadge(state, text) {
+  const badge = document.getElementById('monitor-badge');
+  if (!badge) return;
+  const color = state === 'running' ? '#3b82f6'
+              : state === 'done'    ? '#22c55e'
+              : state === 'cloud'   ? '#f59e0b'   // âmbar para IPs locais em nuvem
+              : '#64748b';
+  badge.className = state === 'running' ? 'running' : '';
+  badge.innerHTML = `<i class="fas fa-circle-dot" style="color:${color}"></i> ${text}`;
+}
+
+function startMonitoring() {
+  stopMonitoring(); // garante sem sobreposição
+  _monitorInterval = setInterval(() => runConnectivityCheck(true), MONITOR_INTERVAL_MIN * 60 * 1000);
+}
+
+function stopMonitoring() {
+  if (_monitorInterval) { clearInterval(_monitorInterval); _monitorInterval = null; }
+  _monitorRunning = false;
+}
+
+let _infraListVisible = false;
+async function toggleInfraList() {
+  _infraListVisible = !_infraListVisible;
+  document.getElementById('infra-list-drawer').style.display = _infraListVisible ? 'block' : 'none';
+  if (_infraListVisible) await renderInfraList();
+}
+
+async function renderInfraList() {
+  const container = document.getElementById('infra-list-content');
+  container.innerHTML = '<div class="page-loader"><div class="loader"></div></div>';
+  const data = await sbQuery(sb.from('infraestrutura').select('*').eq('user_id', currentUser?.id).order('name').limit(200));
+  if (!data?.length) {
+    container.innerHTML = `<div class="empty-state" style="padding:32px 16px"><i class="fas fa-server"></i><h3>Nenhum ativo</h3><p>Clique em "Novo Ativo".</p></div>`;
+    return;
+  }
+  container.innerHTML = data.map(i => {
+    const meta = getTypeMeta(i.category);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg3);margin-bottom:8px;border:1px solid var(--border)">
+      <div style="width:34px;height:34px;border-radius:8px;background:${meta.color}22;color:${meta.color};display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas ${meta.icon}"></i></div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${i.name}</div><div style="font-size:11px;color:var(--text3)">${i.ip_address||i.hostname||meta.label} · ${fmtCurrency(i.monthly_cost)}</div></div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="editInfra(${i.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteInfra(${i.id},'${i.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </div></div>`;
+  }).join('');
+}
+
+// Infraestrutura CRUD (tabela "infraestrutura")
+function openInfraModal(obj = null) {
+  document.getElementById('infra-modal-title').textContent = obj ? 'Editar Ativo' : 'Novo Ativo de Infraestrutura';
+  ['infra-id','infra-name','infra-category','infra-ip','infra-hostname','infra-os','infra-provider','infra-cpu','infra-ram','infra-disk','infra-cost','infra-responsible','infra-notes'].forEach(id => {
+    const keys = { 'infra-id':'id','infra-name':'name','infra-category':'category','infra-ip':'ip_address','infra-hostname':'hostname','infra-os':'os','infra-provider':'provider','infra-cpu':'cpu_cores','infra-ram':'ram_gb','infra-disk':'disk_gb','infra-cost':'monthly_cost','infra-responsible':'responsible','infra-notes':'notes' };
+    document.getElementById(id).value = obj?.[keys[id]] ?? (id==='infra-category' ? 'servidor' : '');
+  });
+  openModal('modal-infra');
+}
+
+async function editInfra(id) {
+  const data = await sbQuery(sb.from('infraestrutura').select('*').eq('id', id).single());
+  if (data) openInfraModal(data);
+}
+
+async function saveInfra() {
+  const id = document.getElementById('infra-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('infra-name').value,
+    category: document.getElementById('infra-category').value,
+    ip_address: document.getElementById('infra-ip').value || null,
+    hostname: document.getElementById('infra-hostname').value || null,
+    os: document.getElementById('infra-os').value || null,
+    provider: document.getElementById('infra-provider').value || null,
+    cpu_cores: parseInt(document.getElementById('infra-cpu').value) || null,
+    ram_gb: parseFloat(document.getElementById('infra-ram').value) || null,
+    disk_gb: parseFloat(document.getElementById('infra-disk').value) || null,
+    monthly_cost: parseFloat(document.getElementById('infra-cost').value) || null,
+    responsible: document.getElementById('infra-responsible').value || null,
+    notes: document.getElementById('infra-notes').value || null,
+  };
+  const q = id ? sb.from('infraestrutura').update(payload).eq('id', id).select() : sb.from('infraestrutura').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Ativo atualizado!' : 'Ativo cadastrado!'); closeModal('modal-infra'); openInfraModal(); await loadTopoPanel(); if (_infraListVisible) await renderInfraList(); }
+}
+
+async function deleteInfra(id, name) {
+  if (!confirm(`Remover "${name}"?`)) return;
+  const res = await sbQuery(sb.from('infraestrutura').delete().eq('id', id).select());
+  if (res !== null) { toast('Ativo removido.', 'info'); await loadTopoPanel(); if (_infraListVisible) await renderInfraList(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROJETOS — tabela "projetos"
+// ═══════════════════════════════════════════════════════════
+const projStatusBadge = {
+  planejamento:  '<span class="badge badge-gray">Planejamento</span>',
+  em_andamento:  '<span class="badge badge-blue">Em andamento</span>',
+  pausado:       '<span class="badge badge-yellow">Pausado</span>',
+  concluido:     '<span class="badge badge-green">Concluído</span>',
+  cancelado:     '<span class="badge badge-red">Cancelado</span>',
+};
+
+async function loadProjects() {
+  const search = document.getElementById('proj-search').value.trim();
+  const status = document.getElementById('proj-status-filter').value;
+  let q = sb.from('projetos').select('*').eq('user_id', currentUser?.id).order('created_at', { ascending:false }).limit(100);
+  if (status) q = q.eq('status', status);
+  if (search) q = q.or(`name.ilike.%${search}%,responsible.ilike.%${search}%`);
+  const data = await sbQuery(q);
+
+  const container = document.getElementById('proj-cards');
+  const empty = document.getElementById('proj-empty');
+  if (!data?.length) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  container.innerHTML = data.map(p => `
+    <div class="table-wrapper" style="padding:0">
+      <div style="padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div><div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:4px">${p.name}</div>
+          <div style="font-size:12px;color:var(--text3)">${p.responsible||'Sem responsável'}</div></div>
+          ${projStatusBadge[p.status]||''}
+        </div>
+        ${p.description ? `<div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${p.description}</div>` : ''}
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:4px">
+            <span>Progresso</span><span style="color:var(--text)">${p.progress}%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          ${p.start_date ? `<span style="font-size:11px;color:var(--text3)">📅 ${fmtDate(p.start_date)}</span>` : ''}
+          ${p.end_date ? `<span style="font-size:11px;color:var(--text3)">🏁 ${fmtDate(p.end_date)}</span>` : ''}
+          ${p.repository_url ? `<a href="${p.repository_url}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none">⬡ Repo</a>` : ''}
+          ${p.production_url ? `<a href="${p.production_url}" target="_blank" style="font-size:11px;color:var(--green);text-decoration:none">🌐 Prod</a>` : ''}
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:12px 20px;display:flex;justify-content:flex-end;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="editProject(${p.id})"><i class="fas fa-edit"></i> Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id},'${p.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function openProjectModal(obj = null) {
+  document.getElementById('proj-modal-title').textContent = obj ? 'Editar Projeto' : 'Novo Projeto';
+  document.getElementById('proj-id').value = obj?.id || '';
+  document.getElementById('proj-name').value = obj?.name || '';
+  document.getElementById('proj-responsible').value = obj?.responsible || '';
+  document.getElementById('proj-description').value = obj?.description || '';
+  document.getElementById('proj-status').value = obj?.status || 'planejamento';
+  document.getElementById('proj-progress').value = obj?.progress ?? 0;
+  document.getElementById('proj-start').value = obj?.start_date ? obj.start_date.slice(0,10) : '';
+  document.getElementById('proj-end').value = obj?.end_date ? obj.end_date.slice(0,10) : '';
+  document.getElementById('proj-repo').value = obj?.repository_url || '';
+  document.getElementById('proj-prod-url').value = obj?.production_url || '';
+  document.getElementById('proj-notes').value = obj?.notes || '';
+  openModal('modal-project');
+}
+
+async function editProject(id) {
+  const data = await sbQuery(sb.from('projetos').select('*').eq('id', id).single());
+  if (data) openProjectModal(data);
+}
+
+async function saveProject() {
+  const id = document.getElementById('proj-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('proj-name').value,
+    responsible: document.getElementById('proj-responsible').value || null,
+    description: document.getElementById('proj-description').value || null,
+    status: document.getElementById('proj-status').value,
+    progress: parseInt(document.getElementById('proj-progress').value) || 0,
+    start_date: document.getElementById('proj-start').value || null,
+    end_date: document.getElementById('proj-end').value || null,
+    repository_url: document.getElementById('proj-repo').value || null,
+    production_url: document.getElementById('proj-prod-url').value || null,
+    notes: document.getElementById('proj-notes').value || null,
+  };
+  const q = id ? sb.from('projetos').update(payload).eq('id', id).select() : sb.from('projetos').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Projeto atualizado!' : 'Projeto cadastrado!'); closeModal('modal-project'); openProjectModal(); loadProjects(); }
+}
+
+async function deleteProject(id, name) {
+  if (!confirm(`Remover o projeto "${name}"?`)) return;
+  const res = await sbQuery(sb.from('projetos').delete().eq('id', id));
+  if (res !== null) { toast('Projeto removido.', 'info'); loadProjects(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCRIPTS — tabela "scripts"
+// ═══════════════════════════════════════════════════════════
+async function loadScripts() {
+  const search = document.getElementById('sc-search').value.trim();
+  const lang   = document.getElementById('sc-lang-filter').value;
+  let q = sb.from('scripts').select('*').eq('user_id', currentUser?.id).order('name').limit(200);
+  if (lang) q = q.eq('language', lang);
+  if (search) q = q.or(`name.ilike.%${search}%,description.ilike.%${search}%,tags.ilike.%${search}%`);
+  const data = await sbQuery(q);
+
+  const tbody = document.getElementById('sc-tbody');
+  const empty = document.getElementById('sc-empty');
+  if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td><strong>${s.name}</strong>${s.description ? `<div style="font-size:11px;color:var(--text3)">${s.description.slice(0,60)}...</div>` : ''}</td>
+      <td><span class="lang-tag lang-${s.language.toLowerCase()}">${s.language}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${s.used_in||'—'}</td>
+      <td>${s.tags ? s.tags.split(',').map(t=>`<span class="tag">${t.trim()}</span>`).join(' ') : '—'}</td>
+      <td style="font-size:12px">${s.author||'—'}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="viewScript(${s.id})"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="editScript(${s.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteScript(${s.id},'${s.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+async function viewScript(id) {
+  const s = await sbQuery(sb.from('scripts').select('*').eq('id', id).single());
+  if (!s) return;
+  document.getElementById('scv-title').textContent = s.name;
+  document.getElementById('scv-lang-tag').innerHTML = `<span class="lang-tag lang-${s.language.toLowerCase()}">${s.language}</span>`;
+  document.getElementById('scv-used-in').textContent = s.used_in ? `Usado em: ${s.used_in}` : '';
+  document.getElementById('scv-description').textContent = s.description || '';
+  document.getElementById('scv-code').textContent = s.code;
+  openModal('modal-script-view');
+}
+
+function openScriptModal(obj = null) {
+  document.getElementById('sc-modal-title').textContent = obj ? 'Editar Script' : 'Novo Script';
+  document.getElementById('sc-id').value = obj?.id || '';
+  document.getElementById('sc-name').value = obj?.name || '';
+  document.getElementById('sc-language').value = obj?.language || 'python';
+  document.getElementById('sc-used-in').value = obj?.used_in || '';
+  document.getElementById('sc-author').value = obj?.author || '';
+  document.getElementById('sc-tags').value = obj?.tags || '';
+  document.getElementById('sc-description').value = obj?.description || '';
+  document.getElementById('sc-code').value = obj?.code || '';
+  openModal('modal-script');
+}
+
+async function editScript(id) {
+  const data = await sbQuery(sb.from('scripts').select('*').eq('id', id).single());
+  if (data) openScriptModal(data);
+}
+
+async function saveScript() {
+  const id = document.getElementById('sc-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('sc-name').value,
+    language: document.getElementById('sc-language').value,
+    used_in: document.getElementById('sc-used-in').value || null,
+    author: document.getElementById('sc-author').value || null,
+    tags: document.getElementById('sc-tags').value || null,
+    description: document.getElementById('sc-description').value || null,
+    code: document.getElementById('sc-code').value,
+  };
+  const q = id ? sb.from('scripts').update(payload).eq('id', id).select() : sb.from('scripts').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Script atualizado!' : 'Script salvo!'); closeModal('modal-script'); openScriptModal(); loadScripts(); }
+}
+
+async function deleteScript(id, name) {
+  if (!confirm(`Remover o script "${name}"?`)) return;
+  const res = await sbQuery(sb.from('scripts').delete().eq('id', id));
+  if (res !== null) { toast('Script removido.', 'info'); loadScripts(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TECNOLOGIAS — tabela "tecnologias"
+// ═══════════════════════════════════════════════════════════
+const techCatColors = { backend:'--accent', frontend:'--cyan', banco:'--purple', devops:'--green', mobile:'--yellow', outro:'--text3' };
+
+async function loadTechnologies() {
+  const search = document.getElementById('tech-search').value.trim();
+  const cat    = document.getElementById('tech-cat-filter').value;
+  let q = sb.from('tecnologias').select('*').eq('user_id', currentUser?.id).order('name').limit(300);
+  if (cat) q = q.eq('category', cat);
+  if (search) q = q.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+  const data = await sbQuery(q);
+
+  const grid = document.getElementById('tech-grid');
+  const empty = document.getElementById('tech-empty');
+  if (!data?.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = data.map(t => {
+    const color = `var(${techCatColors[t.category]||'--text3'})`;
+    return `<div class="table-wrapper" style="padding:0;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div style="padding:16px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:700">${t.name}</div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);color:${color};border:1px solid ${color}33">${t.category}</span>
+        </div>
+        ${t.version ? `<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-family:var(--font-mono)">v${t.version}</div>` : ''}
+        ${t.description ? `<div style="font-size:12px;color:var(--text2);line-height:1.4">${t.description.slice(0,80)}${t.description.length>80?'...':''}</div>` : ''}
+        ${t.docs_url ? `<a href="${t.docs_url}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none;display:block;margin-top:8px">📖 Documentação →</a>` : ''}
+      </div>
+      <div style="border-top:1px solid var(--border);padding:10px 16px;display:flex;justify-content:flex-end;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="editTechnology(${t.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTechnology(${t.id},'${t.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTechModal(obj = null) {
+  document.getElementById('tech-modal-title').textContent = obj ? 'Editar Tecnologia' : 'Nova Tecnologia';
+  document.getElementById('tech-id').value = obj?.id || '';
+  document.getElementById('tech-name').value = obj?.name || '';
+  document.getElementById('tech-category').value = obj?.category || 'backend';
+  document.getElementById('tech-version').value = obj?.version || '';
+  document.getElementById('tech-docs').value = obj?.docs_url || '';
+  document.getElementById('tech-description').value = obj?.description || '';
+  openModal('modal-tech');
+}
+
+async function editTechnology(id) {
+  const data = await sbQuery(sb.from('tecnologias').select('*').eq('id', id).single());
+  if (data) openTechModal(data);
+}
+
+async function saveTechnology() {
+  const id = document.getElementById('tech-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('tech-name').value,
+    category: document.getElementById('tech-category').value,
+    version: document.getElementById('tech-version').value || null,
+    docs_url: document.getElementById('tech-docs').value || null,
+    description: document.getElementById('tech-description').value || null,
+  };
+  const q = id ? sb.from('tecnologias').update(payload).eq('id', id).select() : sb.from('tecnologias').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Tecnologia atualizada!' : 'Tecnologia cadastrada!'); closeModal('modal-tech'); openTechModal(); loadTechnologies(); }
+}
+
+async function deleteTechnology(id, name) {
+  if (!confirm(`Remover "${name}"?`)) return;
+  const res = await sbQuery(sb.from('tecnologias').delete().eq('id', id));
+  if (res !== null) { toast('Tecnologia removida.', 'info'); loadTechnologies(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INFRAESTRUTURA — Formulário Dinâmico por Categoria
+// ═══════════════════════════════════════════════════════════
+
+/** Mapeia categoria → qual grupo de campos mostrar */
+const INFRA_FIELD_GROUPS = {
+  servidor:     'server',
+  cloud:        'server',
+  storage:      'server',
+  switch:       'network',
+  roteador:     'network',
+  firewall:     'network',
+  access_point: 'network',
+  nobreak:      'nobreak',
+  link:         'link',
+  camera:       null,
+  outro:        null,
+};
+
+/** Traduz category do banco (PT) para chave do EQ_TYPE_META (EN) */
+const INFRA_CAT_TO_TYPE = {
+  servidor:     'Server',
+  switch:       'Switch',
+  roteador:     'Router',
+  firewall:     'Firewall',
+  nobreak:      'Nobreak',
+  access_point: 'AccessPoint',
+  storage:      'Storage',
+  cloud:        'Cloud',
+  link:         'Link',
+  camera:       'Camera',
+  outro:        'Other',
+  rede:         'Other',
+};
+
+/** Retorna a entrada correta do EQ_TYPE_META independente de como o tipo veio */
+function getTypeMeta(type) {
+  if (!type) return EQ_TYPE_META.Other;
+  if (EQ_TYPE_META[type]) return EQ_TYPE_META[type];
+  const mapped = INFRA_CAT_TO_TYPE[type] || INFRA_CAT_TO_TYPE[type.toLowerCase()];
+  return EQ_TYPE_META[mapped] || EQ_TYPE_META.Other;
+}
+
+function infraCategoryChanged() {
+  const cat = document.getElementById('infra-category').value;
+  const group = INFRA_FIELD_GROUPS[cat] || null;
+  // Esconde todos os grupos
+  document.querySelectorAll('.infra-field-group').forEach(el => el.style.display = 'none');
+  // Mostra o grupo correto
+  if (group) {
+    const el = document.getElementById(`infra-fields-${group}`);
+    if (el) el.style.display = '';
+  }
+}
+
+/** Lê os campos extras do formulário para dados_json */
+function getInfraExtraJson() {
+  const cat = document.getElementById('infra-category').value;
+  const group = INFRA_FIELD_GROUPS[cat];
+  const extra = {};
+  if (group === 'network') {
+    extra.ports       = parseInt(document.getElementById('infra-ports').value) || null;
+    extra.speed       = document.getElementById('infra-speed').value || null;
+    extra.management  = document.getElementById('infra-mgmt').value || null;
+    extra.vlan        = document.getElementById('infra-vlan').value || null;
+    extra.firmware    = document.getElementById('infra-firmware').value || null;
+  } else if (group === 'nobreak') {
+    extra.va          = parseInt(document.getElementById('infra-va').value) || null;
+    extra.watts       = parseInt(document.getElementById('infra-watts').value) || null;
+    extra.autonomia   = parseInt(document.getElementById('infra-autonomia').value) || null;
+    extra.battery_type= document.getElementById('infra-battery-type').value || null;
+    extra.battery_date= document.getElementById('infra-battery-date').value || null;
+  } else if (group === 'link') {
+    extra.download    = document.getElementById('infra-dl').value || null;
+    extra.upload      = document.getElementById('infra-ul').value || null;
+    extra.link_type   = document.getElementById('infra-link-type').value || null;
+    extra.isp         = document.getElementById('infra-isp').value || null;
+    extra.contract_num= document.getElementById('infra-contract-num').value || null;
+  }
+  return extra;
+}
+
+/** Preenche campos extras ao editar um ativo */
+function setInfraExtraFields(dados_json) {
+  if (!dados_json) return;
+  const d = typeof dados_json === 'string' ? JSON.parse(dados_json) : dados_json;
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  setVal('infra-ports', d.ports);
+  setVal('infra-speed', d.speed);
+  setVal('infra-mgmt', d.management);
+  setVal('infra-vlan', d.vlan);
+  setVal('infra-firmware', d.firmware);
+  setVal('infra-va', d.va);
+  setVal('infra-watts', d.watts);
+  setVal('infra-autonomia', d.autonomia);
+  setVal('infra-battery-type', d.battery_type);
+  setVal('infra-battery-date', d.battery_date);
+  setVal('infra-dl', d.download);
+  setVal('infra-ul', d.upload);
+  setVal('infra-link-type', d.link_type);
+  setVal('infra-isp', d.isp);
+  setVal('infra-contract-num', d.contract_num);
+}
+
+// Override openInfraModal to trigger dynamic fields
+const _origOpenInfraModal = openInfraModal;
+function openInfraModal(obj = null) {
+  document.getElementById('infra-modal-title').textContent = obj ? 'Editar Ativo' : 'Novo Ativo de Infraestrutura';
+  // Reset all fields
+  ['infra-id','infra-name','infra-ip','infra-hostname','infra-os','infra-provider',
+   'infra-cpu','infra-ram','infra-disk','infra-cost','infra-responsible','infra-notes',
+   'infra-ports','infra-vlan','infra-firmware','infra-va','infra-watts','infra-autonomia',
+   'infra-battery-date','infra-dl','infra-ul','infra-isp','infra-contract-num'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = obj ? (obj[{
+      'infra-id':'id','infra-name':'name','infra-ip':'ip_address','infra-hostname':'hostname',
+      'infra-os':'os','infra-provider':'provider','infra-cpu':'cpu_cores','infra-ram':'ram_gb',
+      'infra-disk':'disk_gb','infra-cost':'monthly_cost','infra-responsible':'responsible','infra-notes':'notes'
+    }[id]] ?? '') : '';
+  });
+  // Set category and trigger field change
+  document.getElementById('infra-category').value = obj?.category || 'servidor';
+  document.getElementById('infra-speed').value = '';
+  document.getElementById('infra-mgmt').value = '';
+  document.getElementById('infra-battery-type').value = '';
+  document.getElementById('infra-link-type').value = '';
+  infraCategoryChanged();
+  if (obj?.dados_json) setInfraExtraFields(obj.dados_json);
+  openModal('modal-infra');
+}
+
+// Override saveInfra to include extra fields
+async function saveInfra() {
+  const id = document.getElementById('infra-id').value;
+  const extra = getInfraExtraJson();
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('infra-name').value,
+    category: document.getElementById('infra-category').value,
+    ip_address: document.getElementById('infra-ip').value || null,
+    hostname: document.getElementById('infra-hostname').value || null,
+    os: document.getElementById('infra-os').value || null,
+    provider: document.getElementById('infra-provider').value || null,
+    cpu_cores: parseInt(document.getElementById('infra-cpu').value) || null,
+    ram_gb: parseFloat(document.getElementById('infra-ram').value) || null,
+    disk_gb: parseFloat(document.getElementById('infra-disk').value) || null,
+    monthly_cost: parseFloat(document.getElementById('infra-cost').value) || null,
+    responsible: document.getElementById('infra-responsible').value || null,
+    notes: document.getElementById('infra-notes').value || null,
+    dados_json: extra,
+  };
+  if (!payload.name.trim()) { toast('O campo Nome é obrigatório.', 'error'); return; }
+  const q = id ? sb.from('infraestrutura').update(payload).eq('id', id).select() : sb.from('infraestrutura').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) {
+    toast(id ? 'Ativo atualizado! ✓' : 'Ativo cadastrado! ✓');
+    closeModal('modal-infra');
+    openInfraModal();
+    await loadTopoPanel();
+    if (_infraListVisible) await renderInfraList();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLIENTES — tabela "clientes"
+// ═══════════════════════════════════════════════════════════
+const cliStatusBadge = {
+  ativo:     '<span class="badge badge-green">Ativo</span>',
+  inativo:   '<span class="badge badge-gray">Inativo</span>',
+  prospecto: '<span class="badge badge-yellow">Prospecto</span>',
+};
+
+const cliServiceLabel = {
+  suporte:'Suporte', infra:'Infraestrutura', dev:'Desenvolvimento',
+  consultoria:'Consultoria', cftv:'CFTV', redes:'Redes', outro:'Outro'
+};
+
+async function loadClients() {
+  const search = document.getElementById('cli-search').value.trim();
+  const status = document.getElementById('cli-status-filter').value;
+  let q = sb.from('clientes').select('*').eq('user_id', currentUser?.id).order('name').limit(200);
+  if (status) q = q.eq('status', status);
+  if (search) q = q.or(`name.ilike.%${search}%,document_number.ilike.%${search}%,contact.ilike.%${search}%`);
+  const data = await sbQuery(q);
+  const tbody = document.getElementById('cli-tbody');
+  const empty = document.getElementById('cli-empty');
+  if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(cl => `
+    <tr>
+      <td><strong>${cl.name}</strong>${cl.responsible ? `<div style="font-size:11px;color:var(--text3)">${cl.responsible}</div>` : ''}</td>
+      <td class="td-mono">${cl.document_number || '—'}</td>
+      <td>${cl.contact || '—'}</td>
+      <td><span class="badge badge-blue">${cliServiceLabel[cl.service_type] || cl.service_type || '—'}</span></td>
+      <td>${cliStatusBadge[cl.status] || cl.status}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editClient(${cl.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient(${cl.id},'${cl.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+function openClientModal(obj = null) {
+  document.getElementById('cli-modal-title').textContent = obj ? 'Editar Cliente' : 'Novo Cliente';
+  document.getElementById('cli-id').value = obj?.id || '';
+  document.getElementById('cli-name').value = obj?.name || '';
+  document.getElementById('cli-doc').value = obj?.document_number || '';
+  document.getElementById('cli-contact').value = obj?.contact || '';
+  document.getElementById('cli-responsible').value = obj?.responsible || '';
+  document.getElementById('cli-service-type').value = obj?.service_type || 'suporte';
+  document.getElementById('cli-status').value = obj?.status || 'ativo';
+  document.getElementById('cli-notes').value = obj?.notes || '';
+  openModal('modal-client');
+}
+
+async function editClient(id) {
+  const data = await sbQuery(sb.from('clientes').select('*').eq('id', id).single());
+  if (data) openClientModal(data);
+}
+
+async function saveClient() {
+  const id = document.getElementById('cli-id').value;
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('cli-name').value.trim(),
+    document_number: document.getElementById('cli-doc').value || null,
+    contact: document.getElementById('cli-contact').value || null,
+    responsible: document.getElementById('cli-responsible').value || null,
+    service_type: document.getElementById('cli-service-type').value,
+    status: document.getElementById('cli-status').value,
+    notes: document.getElementById('cli-notes').value || null,
+  };
+  if (!payload.name) { toast('O campo Nome é obrigatório.', 'error'); return; }
+  const q = id ? sb.from('clientes').update(payload).eq('id', id).select() : sb.from('clientes').insert(payload).select();
+  const res = await sbQuery(q);
+  if (res !== null) { toast(id ? 'Cliente atualizado! ✓' : 'Cliente cadastrado! ✓'); closeModal('modal-client'); openClientModal(); loadClients(); }
+}
+
+async function deleteClient(id, name) {
+  if (!confirm(`Remover o cliente "${name}"?`)) return;
+  const res = await sbQuery(sb.from('clientes').delete().eq('id', id));
+  if (res !== null) { toast('Cliente removido.', 'info'); loadClients(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PERFIL — tabela "profiles" (vinculada ao auth.users)
+// ═══════════════════════════════════════════════════════════
+const roleBadgeMap = {
+  admin:    '<span class="badge badge-red"><i class="fas fa-shield-halved"></i> Admin</span>',
+  elevated: '<span class="badge badge-yellow"><i class="fas fa-star"></i> Elevado</span>',
+  user:     '<span class="badge badge-blue"><i class="fas fa-user"></i> Usuário</span>',
+};
+
+async function loadProfile() {
+  if (!currentUser) return;
+  // Busca perfil na tabela profiles
+  const profile = await sbQuery(
+    sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(), true
+  );
+  const name = profile?.full_name || currentUser?.user_metadata?.full_name || currentUser.email.split('@')[0];
+  const role = profile?.role || currentUser?.user_metadata?.role || 'user';
+  const initials = name[0].toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('profile-name-display').textContent = name;
+  document.getElementById('profile-email-display').textContent = currentUser.email;
+  document.getElementById('profile-role-badge').innerHTML = roleBadgeMap[role] || roleBadgeMap.user;
+  document.getElementById('profile-name-input').value = name;
+  document.getElementById('profile-email-input').value = currentUser.email;
+  document.getElementById('profile-new-password').value = '';
+  document.getElementById('profile-confirm-password').value = '';
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profile-name-input').value.trim();
+  if (!name) { toast('Nome não pode ser vazio.', 'error'); return; }
+  // Upsert na tabela profiles
+  const { error } = await sb.from('profiles').upsert(
+    { id: currentUser.id, full_name: name, updated_at: new Date().toISOString() },
+    { onConflict: 'id' }
+  );
+  if (error) { toast(error.message, 'error'); return; }
+  // Atualiza user_metadata do Supabase Auth
+  await sb.auth.updateUser({ data: { full_name: name } });
+  toast('Perfil atualizado! ✓');
+  // Atualiza sidebar
+  document.getElementById('user-display-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('profile-name-display').textContent = name;
+  document.getElementById('profile-avatar').textContent = name[0].toUpperCase();
+}
+
+async function changePassword() {
+  const pwd = document.getElementById('profile-new-password').value;
+  const confirm = document.getElementById('profile-confirm-password').value;
+  if (!pwd) { toast('Digite a nova senha.', 'error'); return; }
+  if (pwd.length < 6) { toast('Senha deve ter no mínimo 6 caracteres.', 'error'); return; }
+  if (pwd !== confirm) { toast('As senhas não coincidem.', 'error'); return; }
+  const { error } = await sb.auth.updateUser({ password: pwd });
+  if (error) { toast(error.message, 'error'); return; }
+  document.getElementById('profile-new-password').value = '';
+  document.getElementById('profile-confirm-password').value = '';
+  toast('Senha alterada com sucesso! ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUDIT LOG — tabela "logs"
+// ═══════════════════════════════════════════════════════════
+let lastEquipmentsData = [];
+
+function auditLog(action, table_name, record_id, details = {}) {
+  sb.from('logs').insert({
+    user_id:    currentUser?.id,
+    user_email: currentUser?.email,
+    action,
+    table_name,
+    record_id:  String(record_id ?? ''),
+    details,
+  }).then(({ error }) => {
+    if (error) console.warn('[AuditLog]', error.message);
+  }).catch(e => console.warn('[AuditLog]', e?.message));
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORTAR CSV — Equipamentos
+// ═══════════════════════════════════════════════════════════
+function exportEquipmentsCSV() {
+  if (!lastEquipmentsData.length) { toast('Carregue a lista antes de exportar.', 'info'); return; }
+  const cols = ['id','name','type','patrimony','serial_number','brand','model','responsible_user','location','status','purchase_date','notes'];
+  const headers = ['ID','Nome','Tipo','Patrimônio','Série','Marca','Modelo','Responsável','Localização','Status','Data Compra','Notas'];
+  const rows = lastEquipmentsData.map(eq => cols.map(c => {
+    const v = eq[c] ?? '';
+    return `"${String(v).replace(/"/g, '""')}"`;
+  }));
+  const csv = [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.join(','))].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `equipamentos_${new Date().toISOString().slice(0,10)}.csv`,
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado! ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// USUÁRIOS — tabela "profiles" (admin only)
+// ═══════════════════════════════════════════════════════════
+
+let _currentUserRole = 'user';
+
+async function loadUsers() {
+  const gate      = document.getElementById('usr-admin-gate');
+  const tableWrap = document.getElementById('usr-table-wrap');
+
+  if (_currentUserRole !== 'admin') {
+    gate.style.display      = 'flex';
+    tableWrap.style.display = 'none';
+    return;
+  }
+  gate.style.display      = 'none';
+  tableWrap.style.display = 'block';
+
+  const search = document.getElementById('usr-search').value.trim();
+  const role   = document.getElementById('usr-role-filter').value;
+  let q = sb.from('profiles').select('*').order('full_name').limit(200);
+  if (role)   q = q.eq('role', role);
+  if (search) q = q.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+  const data = await sbQuery(q);
+  const tbody = document.getElementById('usr-tbody');
+  const empty = document.getElementById('usr-empty');
+  if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = data.map(u => {
+    const isSelf = u.id === currentUser.id;
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">
+            ${(u.full_name || u.email || '?')[0].toUpperCase()}
+          </div>
+          <div>
+            <strong>${u.full_name || '—'}</strong>
+            ${isSelf ? '<span style="font-size:10px;background:var(--accent)22;color:var(--accent);border-radius:4px;padding:1px 6px;margin-left:6px">Você</span>' : ''}
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text2)">${u.email || '—'}</td>
+      <td>${roleBadgeMap[u.role] || roleBadgeMap.user}</td>
+      <td style="font-size:12px;color:var(--text3)">${u.created_at ? fmtDate(u.created_at) : '—'}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openUserRoleModal('${u.id}','${(u.full_name||u.email||'').replace(/'/g,'')}','${u.role||'user'}')">
+          <i class="fas fa-user-gear"></i> Nível
+        </button>
+        ${!isSelf ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${(u.full_name||u.email||'').replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openInviteModal() {
+  ['inv-email','inv-name','inv-password'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inv-role').value = 'user';
+  openModal('modal-user-invite');
+}
+
+async function inviteUser() {
+  const email = document.getElementById('inv-email').value.trim();
+  const name  = document.getElementById('inv-name').value.trim();
+  const role  = document.getElementById('inv-role').value;
+  const pass  = document.getElementById('inv-password').value;
+
+  if (!email) { toast('E-mail é obrigatório.', 'error'); return; }
+  if (!pass || pass.length < 6) { toast('Senha mínima de 6 caracteres.', 'error'); return; }
+
+  // Guarda sessão do admin antes do signUp
+  const { data: before } = await sb.auth.getSession();
+  const adminSession = before?.session;
+
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password: pass,
+    options: { data: { full_name: name || email.split('@')[0] } }
+  });
+
+  if (error) { toast(error.message, 'error'); return; }
+
+  // Se o signUp substituiu a sessão (confirm email desativado), restaura admin
+  const { data: after } = await sb.auth.getSession();
+  if (adminSession && after?.session?.user?.id !== adminSession.user.id) {
+    await sb.auth.setSession({
+      access_token:  adminSession.access_token,
+      refresh_token: adminSession.refresh_token,
+    });
+  }
+
+  // Define role se diferente do padrão
+  if (data.user && role !== 'user') {
+    await sbQuery(sb.from('profiles').update({ role }).eq('id', data.user.id).select(), true);
+  }
+
+  toast('Usuário criado com sucesso! ✓');
+  closeModal('modal-user-invite');
+  loadUsers();
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`Remover o perfil de "${name}"?\n\nAtenção: remove apenas o perfil local. A conta no Supabase Auth permanece.`)) return;
+  const { error } = await sb.from('profiles').delete().eq('id', id);
+  if (error) { toast(error.message, 'error'); return; }
+  toast('Perfil removido.', 'info');
+  loadUsers();
+}
+
+function openUserRoleModal(id, name, role) {
+  document.getElementById('usr-edit-id').value  = id;
+  document.getElementById('usr-edit-name').value = name;
+  document.getElementById('usr-edit-role').value = role;
+  openModal('modal-user-role');
+}
+
+async function saveUserRole() {
+  const id   = document.getElementById('usr-edit-id').value;
+  const role = document.getElementById('usr-edit-role').value;
+  const { error } = await sb.from('profiles').update({ role }).eq('id', id);
+  if (error) { toast(error.message, 'error'); return; }
+  toast('Nível de acesso atualizado! ✓');
+  closeModal('modal-user-role');
+  loadUsers();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATE — extensão para novas abas + admin gate
+// ═══════════════════════════════════════════════════════════
+// Estende pageTitles e pageLoaders
+pageTitles.clients  = 'Clientes';
+pageTitles.profile  = 'Meu Perfil';
+pageTitles.users    = 'Usuários do Sistema';
+pageLoaders.clients = loadClients;
+pageLoaders.profile = loadProfile;
+pageLoaders.users   = loadUsers;
+
+// checkAdminNav() é chamado diretamente dentro de showApp acima
+
+async function checkAdminNav() {
+  if (!currentUser) return;
+  const { data, error } = await sb.from('profiles').select('role').eq('id', currentUser.id).maybeSingle();
+  if (error) {
+    // Erro de rede ou RLS — não tenta upsert para não sobrescrever role existente
+    console.warn('[checkAdminNav] erro ao buscar perfil:', error.message);
+    _currentUserRole = currentUser?.user_metadata?.role || 'user';
+  } else if (!data) {
+    // Perfil realmente não existe — cria com role padrão 'user'
+    const { data: upserted } = await sb.from('profiles').upsert({
+      id:        currentUser.id,
+      email:     currentUser.email,
+      full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0],
+      role:      'user',
+    }, { onConflict: 'id' }).select('role').maybeSingle();
+    _currentUserRole = upserted?.role || 'user';
+  } else {
+    _currentUserRole = data.role || 'user';
+  }
+  // A aba fica sempre visível — a page já exibe "Acesso Restrito" para não-admins
+  document.getElementById('nav-users')?.style.setProperty('display', 'flex');
+}
+
+</script>
+
+</body>
+</html>
