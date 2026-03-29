@@ -1,0 +1,35 @@
+# ─────────────────────────────────────────────────────────────
+# .vercelignore
+# Exclui arquivos do deploy na Vercel.
+# O projeto é uma SPA estática — nada de Python vai para produção.
+# NOTA: scripts/ NÃO está aqui — é necessário para o buildCommand.
+# ─────────────────────────────────────────────────────────────
+
+# Backend Python (local development only — NÃO faz parte do deploy)
+main.py
+config.py
+requirements.txt
+database/
+models/
+routes/
+services/
+
+# Edge Functions (deployadas via Supabase CLI, não via Vercel)
+supabase/
+
+# Arquivos Python compilados
+*.pyc
+*.pyo
+__pycache__/
+
+# Banco local e logs
+*.db
+*.sqlite
+logs/
+
+# Variáveis de ambiente locais
+.env
+
+# IDE e ferramentas locais
+.claude/
+README.md
