@@ -226,15 +226,61 @@
       animation: spin .7s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Modal ───────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: #000a; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card {
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 14px; width: 420px; max-width: calc(100vw - 32px);
+      box-shadow: 0 20px 60px #0009; display: flex; flex-direction: column;
+      animation: slideUp .18s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .modal-header h3 { font-size: 15px; font-weight: 600; flex: 1; }
+    .modal-header .modal-close {
+      background: none; border: none; color: var(--text3); font-size: 16px;
+      cursor: pointer; padding: 4px; line-height: 1; border-radius: 5px;
+    }
+    .modal-header .modal-close:hover { color: var(--text); background: var(--bg3); }
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 7px;
+      padding: 8px 10px; font-size: 13px; color: var(--text); outline: none;
+      font-family: inherit; width: 100%; transition: border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--bg3); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-footer {
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .device-panel-add {
+      padding: 8px; border-top: 1px solid var(--border);
+    }
+    .device-panel-add button {
+      width: 100%; justify-content: center;
+    }
   </style>
 </head>
 <body>
 
 <!-- Top bar -->
 <div class="topbar">
-  <a href="index.html" class="topbar-back" title="Voltar para o painel">
+  <button class="topbar-back" onclick="window.history.back()" title="Voltar">
     <i class="fas fa-arrow-left"></i> Voltar
-  </a>
+  </button>
   <div class="topbar-sep"></div>
   <div class="topbar-title" id="topbar-name">
     <div class="loader"></div>
@@ -359,6 +405,11 @@
           Carregando dispositivos...
         </div>
       </div>
+      <div class="device-panel-add">
+        <button class="btn btn-primary btn-sm" onclick="openAddDeviceModal()">
+          <i class="fas fa-plus"></i> Adicionar Equipamento
+        </button>
+      </div>
     </div>
 
     <!-- Canvas -->
@@ -379,6 +430,69 @@
 
   </div><!-- .workspace -->
 </div><!-- .layout -->
+
+<!-- ── Modal: Adicionar Equipamento ────────────────────── -->
+<div id="modal-add-device" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAddDeviceModal()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
+      <h3>Adicionar Equipamento</h3>
+      <button class="modal-close" onclick="closeAddDeviceModal()" title="Fechar"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="add-dev-name" placeholder="Ex: Switch Cisco SG300" maxlength="120" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="add-dev-type">
+            <option value="Server">Servidor</option>
+            <option value="Switch">Switch</option>
+            <option value="Router">Roteador</option>
+            <option value="Firewall">Firewall</option>
+            <option value="AccessPoint">Access Point</option>
+            <option value="Nobreak">Nobreak</option>
+            <option value="Storage">Storage</option>
+            <option value="Cloud">Cloud</option>
+            <option value="Link">Link</option>
+            <option value="Camera">Câmera</option>
+            <option value="Desktop" selected>Desktop</option>
+            <option value="Notebook">Notebook</option>
+            <option value="Printer">Impressora</option>
+            <option value="Monitor">Monitor</option>
+            <option value="Tablet">Tablet</option>
+            <option value="Mobile">Celular</option>
+            <option value="Other">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="add-dev-status">
+            <option value="ativo">Ativo</option>
+            <option value="manutencao">Em manutenção</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Hostname / IP</label>
+        <input type="text" id="add-dev-hostname" placeholder="Ex: 192.168.1.10 ou srv-files" maxlength="120" />
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="add-dev-notes" rows="2" placeholder="Informações adicionais..." style="resize:vertical;min-height:52px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAddDeviceModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-add-dev-save" onclick="submitAddDevice()">
+        <i class="fas fa-floppy-disk"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Scripts ─────────────────────────────────────────── -->
 <script>window.SUPABASE_URL = window.SUPABASE_URL || ''; window.SUPABASE_KEY = window.SUPABASE_KEY || '';</script>
@@ -443,8 +557,9 @@ const STATUS_BADGE = {
 const STATUS_COLOR = { ativo:'#22c55e', manutencao:'#f59e0b', inativo:'#64748b', descartado:'#ef4444' };
 
 // ── State ───────────────────────────────────────────────
-let clientId   = null;
-let clientData = null;
+let clientId      = null;
+let clientData    = null;
+let _currentUserId = null;
 let equipList  = [];   // equipamentos deste cliente
 let infraList  = [];   // infraestrutura deste cliente
 let allDevices = [];   // merged (para o painel + mapa)
@@ -470,6 +585,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Auth check
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.href = 'index.html'; return; }
+  _currentUserId = session.user.id;
 
   initDrawflow();
   await Promise.all([loadClientData(), loadDevices()]);
@@ -548,8 +664,10 @@ function renderDevicePanel(items) {
   if (!items.length) {
     list.innerHTML = `<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px">
       <i class="fas fa-box-open" style="font-size:24px;display:block;margin-bottom:8px"></i>
-      Nenhum dispositivo vinculado a este cliente.<br>
-      <small>Associe equipamentos via aba Equipamentos.</small>
+      Nenhum dispositivo vinculado.<br>
+      <button class="btn btn-primary btn-sm" onclick="openAddDeviceModal()" style="margin-top:10px">
+        <i class="fas fa-plus"></i> Adicionar agora
+      </button>
     </div>`;
     return;
   }
@@ -833,6 +951,70 @@ function startMonitoring() {
   if (_monitorInterval) clearInterval(_monitorInterval);
   _monitorInterval = setInterval(() => runPingCheck(true), MONITOR_MIN * 60 * 1000);
   runPingCheck(true); // primeira verificação imediata
+}
+
+// ── Modal: Adicionar Equipamento ───────────────────────
+function openAddDeviceModal() {
+  document.getElementById('add-dev-name').value     = '';
+  document.getElementById('add-dev-type').value     = 'Desktop';
+  document.getElementById('add-dev-status').value   = 'ativo';
+  document.getElementById('add-dev-hostname').value = '';
+  document.getElementById('add-dev-notes').value    = '';
+  document.getElementById('modal-add-device').style.display = 'flex';
+  setTimeout(() => document.getElementById('add-dev-name').focus(), 80);
+}
+
+function closeAddDeviceModal() {
+  document.getElementById('modal-add-device').style.display = 'none';
+}
+
+async function submitAddDevice() {
+  const name     = document.getElementById('add-dev-name').value.trim();
+  const type     = document.getElementById('add-dev-type').value;
+  const status   = document.getElementById('add-dev-status').value;
+  const hostname = document.getElementById('add-dev-hostname').value.trim() || null;
+  const notes    = document.getElementById('add-dev-notes').value.trim() || null;
+
+  if (!name) {
+    document.getElementById('add-dev-name').focus();
+    showToast('Informe o nome do equipamento.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-add-dev-save');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader" style="width:13px;height:13px;border-width:2px"></span> Salvando...';
+
+  const { data: inserted, error } = await sb.from('equipamentos').insert({
+    user_id:   _currentUserId,
+    client_id: Number(clientId),
+    name, type, status, hostname, notes,
+  }).select().maybeSingle();
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Salvar';
+
+  if (error) {
+    showToast('Erro ao salvar: ' + error.message, 'error');
+    return;
+  }
+
+  closeAddDeviceModal();
+  showToast(`"${name}" adicionado com sucesso!`);
+
+  // Reload devices list + refresh map
+  await loadDevices();
+
+  // Auto-add the new node to the canvas at the center
+  if (inserted) {
+    const newDev = allDevices.find(d => d.id === inserted.id && d._source === 'equipment');
+    if (newDev && df) {
+      const canvas = document.getElementById('drawflow');
+      const cx = (canvas.clientWidth  / 2 - df.canvas_x) / df.zoom - 80;
+      const cy = (canvas.clientHeight / 2 - df.canvas_y) / df.zoom - 40;
+      addDeviceNode(newDev, cx, cy);
+    }
+  }
 }
 
 // ── Toast ──────────────────────────────────────────────
