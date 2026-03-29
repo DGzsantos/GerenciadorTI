@@ -2478,16 +2478,14 @@
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
-<!-- Credenciais (preenchidas via config.js ou inject-env.js no build) -->
-<script src="config.js"></script>
+<!-- Defaults de segurança: sobrescritos pelo config.js do build.
+     Garantem que SUPABASE_URL/KEY nunca são `undefined` mesmo se config.js falhar. -->
+<script>var SUPABASE_URL = ''; var SUPABASE_KEY = '';</script>
+
+<!-- Credenciais injetadas pelo build (scripts/inject-env.js na Vercel) -->
+<script src="config.js" onerror="console.error('[GerenciadorTI] config.js não carregou — verifique o build da Vercel.')"></script>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// SUPABASE — inicialização
-// ═══════════════════════════════════════════════════════════
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // ═══════════════════════════════════════════════════════════
 // AMBIENTE — detecção de produção (HTTPS) vs local (HTTP)
 // ═══════════════════════════════════════════════════════════
@@ -2499,18 +2497,48 @@ function isPrivateIP(ip) {
     .test((ip ?? '').trim());
 }
 
-// Guard de configuração: exibe aviso inline se credenciais estiverem vazias
-if (!SUPABASE_URL?.startsWith('http') || (SUPABASE_KEY?.length ?? 0) < 20) {
+// ═══════════════════════════════════════════════════════════
+// SUPABASE — validação de credenciais ANTES de createClient()
+// ═══════════════════════════════════════════════════════════
+(function validateConfig() {
+  const ok = typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('http')
+           && typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.length >= 20;
+  if (ok) return;
+
+  // Mostra aviso no DOM assim que o HTML estiver pronto
   document.addEventListener('DOMContentLoaded', () => {
-    const screen = document.getElementById('auth-screen');
-    if (!screen) return;
+    const screen = document.getElementById('auth-screen') || document.body;
     const warn = document.createElement('div');
-    warn.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#ef444422;border:1px solid #ef4444;color:#fca5a5;padding:10px 18px;border-radius:8px;font-size:12px;text-align:center;max-width:360px;z-index:999';
-    warn.innerHTML = '<strong>⚠️ Configuração incompleta</strong><br>Defina <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> nas variáveis de ambiente da Vercel.';
+    warn.style.cssText = [
+      'position:fixed;bottom:24px;left:50%;transform:translateX(-50%)',
+      'background:#1e1e2e;border:1px solid #ef4444;color:#fca5a5',
+      'padding:14px 20px;border-radius:10px;font-size:13px',
+      'text-align:center;max-width:420px;z-index:9999;box-shadow:0 4px 20px #0008',
+    ].join(';');
+    warn.innerHTML = [
+      '<strong style="display:block;margin-bottom:6px;color:#f87171">',
+      '⚠️ Credenciais do Supabase não configuradas</strong>',
+      'Defina <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code>',
+      ' nas variáveis de ambiente da Vercel<br>',
+      '<small style="color:#94a3b8">',
+      'Vercel Dashboard → Settings → Environment Variables</small>',
+    ].join('');
     screen.style.position = 'relative';
     screen.appendChild(warn);
   });
-}
+
+  // Lança erro controlado — impede createClient() de rodar com valores inválidos
+  throw new Error(
+    '[GerenciadorTI] SUPABASE_URL ou SUPABASE_KEY ausentes. ' +
+    'Defina as env vars na Vercel e refaça o deploy.'
+  );
+}());
+
+// ═══════════════════════════════════════════════════════════
+// SUPABASE — inicialização (só chega aqui se credenciais OK)
+// ═══════════════════════════════════════════════════════════
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ═══════════════════════════════════════════════════════════
 // UTILS

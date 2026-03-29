@@ -24,8 +24,19 @@ const key = process.env.SUPABASE_ANON_KEY || '';
 const configPath = path.join(__dirname, '..', 'frontend', 'config.js');
 
 if (!url || !key) {
-  console.warn('[inject-env] ⚠️  SUPABASE_URL ou SUPABASE_ANON_KEY não definidos nas env vars.');
-  console.warn('             Gerando config.js com valores vazios — app mostrará aviso de configuração.');
+  // Falha o build visivelmente para que a Vercel notifique o deploy como "falhou"
+  // (muito melhor do que um site quebrado em produção sem aviso)
+  console.error('');
+  console.error('╔══════════════════════════════════════════════════════════════╗');
+  console.error('║  [inject-env] ❌  VARIÁVEIS DE AMBIENTE NÃO CONFIGURADAS     ║');
+  console.error('╠══════════════════════════════════════════════════════════════╣');
+  console.error(`║  SUPABASE_URL      : ${url ? '✅ definida' : '❌ AUSENTE'}`);
+  console.error(`║  SUPABASE_ANON_KEY : ${key ? '✅ definida' : '❌ AUSENTE'}`);
+  console.error('╠══════════════════════════════════════════════════════════════╣');
+  console.error('║  Corrija em: Vercel Dashboard → Settings → Env Variables     ║');
+  console.error('╚══════════════════════════════════════════════════════════════╝');
+  console.error('');
+  process.exit(1);   // ← build falha com código 1, Vercel bloqueia o deploy
 }
 
 const content = `// Gerado automaticamente pelo build (scripts/inject-env.js) — não edite manualmente.
