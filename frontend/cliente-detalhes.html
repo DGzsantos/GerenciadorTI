@@ -268,10 +268,21 @@
     }
     .device-panel-add {
       padding: 8px; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 5px;
     }
-    .device-panel-add button {
-      width: 100%; justify-content: center;
-    }
+    .device-panel-add button { width: 100%; justify-content: center; }
+    .device-panel-header { justify-content: space-between; }
+    #btn-scan-net { display: none; }
+    /* Scan results table */
+    .scan-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .scan-table th { color: var(--text3); font-weight: 600; text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+    .scan-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .scan-table tr:last-child td { border-bottom: none; }
+    .scan-table tr:hover td { background: var(--bg3); }
+    .scan-ip   { font-family: 'Courier New', monospace; color: var(--accent); }
+    .scan-mac  { color: var(--text3); font-family: 'Courier New', monospace; font-size: 11px; }
+    .scan-host { color: var(--text2); font-size: 11px; }
+    #scan-results-area { max-height: 320px; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -393,7 +404,10 @@
     <!-- Device panel -->
     <div class="device-panel">
       <div class="device-panel-header">
-        <i class="fas fa-server"></i> Dispositivos
+        <span><i class="fas fa-server"></i> Dispositivos</span>
+        <button id="btn-scan-net" class="btn btn-secondary btn-sm" onclick="openScanModal()" title="Escanear Rede Local (localhost)">
+          <i class="fas fa-radar"></i>
+        </button>
       </div>
       <div class="device-search-wrap">
         <i class="fas fa-search si"></i>
@@ -431,58 +445,225 @@
   </div><!-- .workspace -->
 </div><!-- .layout -->
 
-<!-- ── Modal: Adicionar Equipamento ────────────────────── -->
+<!-- ── Modal: Scanner de Rede Local ────────────────────── -->
+<div id="modal-scan" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeScanModal()">
+  <div class="modal-card" style="width:560px">
+    <div class="modal-header">
+      <i class="fas fa-radar" style="color:var(--accent)"></i>
+      <h3>Scanner de Rede Local</h3>
+      <button class="modal-close" onclick="closeScanModal()" title="Fechar"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div class="form-group" style="flex:1;margin:0">
+          <label>Sub-rede (CIDR)</label>
+          <input type="text" id="scan-subnet" value="192.168.1.0/24" placeholder="Ex: 192.168.0.0/24" />
+        </div>
+        <button class="btn btn-primary" id="btn-run-scan" onclick="runScan()" style="flex-shrink:0">
+          <i class="fas fa-play"></i> Iniciar Scan
+        </button>
+      </div>
+      <div id="scan-status" style="font-size:12px;color:var(--text3);margin-top:8px;min-height:18px"></div>
+      <div id="scan-results-area"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Adicionar Ativo ao Cliente ───────────────── -->
 <div id="modal-add-device" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAddDeviceModal()">
-  <div class="modal-card">
+  <div class="modal-card" style="width:520px;max-height:92vh;overflow-y:auto">
     <div class="modal-header">
       <i class="fas fa-plus-circle" style="color:var(--accent)"></i>
-      <h3>Adicionar Equipamento</h3>
+      <h3>Adicionar Ativo ao Cliente</h3>
       <button class="modal-close" onclick="closeAddDeviceModal()" title="Fechar"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
+      <!-- Nome -->
       <div class="form-group">
         <label>Nome *</label>
-        <input type="text" id="add-dev-name" placeholder="Ex: Switch Cisco SG300" maxlength="120" />
+        <input type="text" id="ci-name" placeholder="Ex: Switch Core Andar 1" maxlength="120" />
       </div>
+      <!-- Categoria + Status -->
       <div class="form-row">
         <div class="form-group">
-          <label>Tipo *</label>
-          <select id="add-dev-type">
-            <option value="Server">Servidor</option>
-            <option value="Switch">Switch</option>
-            <option value="Router">Roteador</option>
-            <option value="Firewall">Firewall</option>
-            <option value="AccessPoint">Access Point</option>
-            <option value="Nobreak">Nobreak</option>
-            <option value="Storage">Storage</option>
-            <option value="Cloud">Cloud</option>
-            <option value="Link">Link</option>
-            <option value="Camera">Câmera</option>
-            <option value="Desktop" selected>Desktop</option>
-            <option value="Notebook">Notebook</option>
-            <option value="Printer">Impressora</option>
-            <option value="Monitor">Monitor</option>
-            <option value="Tablet">Tablet</option>
-            <option value="Mobile">Celular</option>
-            <option value="Other">Outro</option>
+          <label>Categoria *</label>
+          <select id="ci-category" onchange="ciCategoryChanged()">
+            <option value="servidor">Servidor</option>
+            <option value="switch">Switch</option>
+            <option value="roteador">Roteador</option>
+            <option value="firewall">Firewall</option>
+            <option value="access_point">Access Point</option>
+            <option value="nobreak">Nobreak</option>
+            <option value="storage">Storage</option>
+            <option value="cloud">Cloud</option>
+            <option value="link">Link</option>
+            <option value="camera">Câmera</option>
+            <option value="outro">Outro</option>
           </select>
         </div>
         <div class="form-group">
           <label>Status</label>
-          <select id="add-dev-status">
-            <option value="ativo">Ativo</option>
-            <option value="manutencao">Em manutenção</option>
-            <option value="inativo">Inativo</option>
+          <select id="ci-active">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label>Hostname / IP</label>
-        <input type="text" id="add-dev-hostname" placeholder="Ex: 192.168.1.10 ou srv-files" maxlength="120" />
+      <!-- IP + Hostname -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Endereço IP</label>
+          <input type="text" id="ci-ip" placeholder="192.168.1.1" maxlength="60" />
+        </div>
+        <div class="form-group">
+          <label>Hostname</label>
+          <input type="text" id="ci-hostname" placeholder="sw-core-01" maxlength="120" />
+        </div>
       </div>
+
+      <!-- ── Grupo: Servidor / Cloud / Storage ── -->
+      <div id="ci-fields-server" class="infra-field-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sistema Operacional</label>
+            <input type="text" id="ci-os" placeholder="Ubuntu 22.04" maxlength="80" />
+          </div>
+          <div class="form-group">
+            <label>Provedor / Localização</label>
+            <input type="text" id="ci-provider" placeholder="AWS, Rack 2..." maxlength="80" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CPU (cores)</label>
+            <input type="number" id="ci-cpu" min="1" max="512" placeholder="8" />
+          </div>
+          <div class="form-group">
+            <label>RAM (GB)</label>
+            <input type="number" id="ci-ram" min="0" step="0.5" placeholder="32" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Disco (GB)</label>
+          <input type="number" id="ci-disk" min="0" step="1" placeholder="500" />
+        </div>
+      </div>
+
+      <!-- ── Grupo: Rede (switch/router/firewall/ap) ── -->
+      <div id="ci-fields-network" class="infra-field-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº de Portas</label>
+            <input type="number" id="ci-ports" min="1" max="1000" placeholder="24" />
+          </div>
+          <div class="form-group">
+            <label>Velocidade</label>
+            <select id="ci-speed">
+              <option value="">—</option>
+              <option>10Mbps</option><option>100Mbps</option>
+              <option>1Gbps</option><option>2.5Gbps</option>
+              <option>10Gbps</option><option>40Gbps</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Gerenciamento</label>
+            <select id="ci-mgmt">
+              <option value="">—</option>
+              <option>Web</option><option>SSH</option>
+              <option>Telnet</option><option>SNMP</option><option>Nenhum</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Firmware / Versão</label>
+            <input type="text" id="ci-firmware" placeholder="15.2(4)E1" maxlength="60" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>VLANs</label>
+          <input type="text" id="ci-vlan" placeholder="10, 20, 30" maxlength="120" />
+        </div>
+      </div>
+
+      <!-- ── Grupo: Nobreak ── -->
+      <div id="ci-fields-nobreak" class="infra-field-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Potência (VA)</label>
+            <input type="number" id="ci-va" min="0" placeholder="1500" />
+          </div>
+          <div class="form-group">
+            <label>Potência (Watts)</label>
+            <input type="number" id="ci-watts" min="0" placeholder="900" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Autonomia (min)</label>
+            <input type="number" id="ci-autonomia" min="0" placeholder="15" />
+          </div>
+          <div class="form-group">
+            <label>Tipo de Bateria</label>
+            <select id="ci-battery-type">
+              <option value="">—</option>
+              <option>VRLA/AGM</option><option>Li-Ion</option><option>Chumbo-ácido</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Última Troca de Bateria</label>
+          <input type="date" id="ci-battery-date" />
+        </div>
+      </div>
+
+      <!-- ── Grupo: Link ── -->
+      <div id="ci-fields-link" class="infra-field-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Download</label>
+            <input type="text" id="ci-dl" placeholder="200 Mbps" maxlength="30" />
+          </div>
+          <div class="form-group">
+            <label>Upload</label>
+            <input type="text" id="ci-ul" placeholder="100 Mbps" maxlength="30" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Link</label>
+            <select id="ci-link-type">
+              <option value="">—</option>
+              <option>Fibra</option><option>Cabo</option><option>Rádio</option>
+              <option>ADSL</option><option>4G/LTE</option><option>5G</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Operadora / ISP</label>
+            <input type="text" id="ci-isp" placeholder="Vivo, Claro..." maxlength="60" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nº do Contrato</label>
+          <input type="text" id="ci-contract-num" placeholder="CTR-2024-001" maxlength="60" />
+        </div>
+      </div>
+
+      <!-- Custo + Responsável -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Custo Mensal (R$)</label>
+          <input type="number" id="ci-cost" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label>Responsável</label>
+          <input type="text" id="ci-responsible" placeholder="Nome do responsável" maxlength="80" />
+        </div>
+      </div>
+      <!-- Observações -->
       <div class="form-group">
         <label>Observações</label>
-        <textarea id="add-dev-notes" rows="2" placeholder="Informações adicionais..." style="resize:vertical;min-height:52px"></textarea>
+        <textarea id="ci-notes" rows="2" placeholder="Informações adicionais..." style="resize:vertical;min-height:52px"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -510,34 +691,42 @@ const sb = createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
 
 // ── Env detection ───────────────────────────────────────
 const IS_CLOUD = location.protocol === 'https:';
+const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 function isPrivateIP(ip) {
   return /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|::1$|localhost)/i.test((ip ?? '').trim());
 }
 
-// ── Type metadata (mirrors index.html) ─────────────────
+// ── Type metadata (identical to index.html infra tab) ──
 const EQ_TYPE_META = {
-  Server:      { icon:'fa-server',           color:'#3b7fff', label:'Servidor'     },
-  Notebook:    { icon:'fa-laptop',           color:'#a855f7', label:'Notebook'     },
-  Desktop:     { icon:'fa-desktop',          color:'#06b6d4', label:'Desktop'      },
-  Printer:     { icon:'fa-print',            color:'#f59e0b', label:'Impressora'   },
-  Monitor:     { icon:'fa-display',          color:'#8b5cf6', label:'Monitor'      },
-  Switch:      { icon:'fa-network-wired',    color:'#10b981', label:'Switch'       },
-  Router:      { icon:'fa-route',            color:'#f97316', label:'Roteador'     },
-  Firewall:    { icon:'fa-shield-halved',    color:'#ef4444', label:'Firewall'     },
-  Cloud:       { icon:'fa-cloud',            color:'#0ea5e9', label:'Cloud'        },
-  Storage:     { icon:'fa-database',         color:'#6366f1', label:'Storage'      },
-  Nobreak:     { icon:'fa-battery-full',     color:'#84cc16', label:'Nobreak'      },
-  AccessPoint: { icon:'fa-broadcast-tower',  color:'#22c55e', label:'Access Point' },
-  Link:        { icon:'fa-ethernet',         color:'#0ea5e9', label:'Link'         },
-  Camera:      { icon:'fa-video',            color:'#f43f5e', label:'Câmera'       },
-  Tablet:      { icon:'fa-tablet',           color:'#ec4899', label:'Tablet'       },
-  Mobile:      { icon:'fa-mobile',           color:'#14b8a6', label:'Celular'      },
-  Other:       { icon:'fa-cube',             color:'#64748b', label:'Outro'        },
+  Server:      { icon:'fa-server',               color:'#3b7fff', label:'Servidor'     },
+  Notebook:    { icon:'fa-laptop',               color:'#a855f7', label:'Notebook'     },
+  Desktop:     { icon:'fa-desktop',              color:'#8b5cf6', label:'Desktop'      },
+  Printer:     { icon:'fa-print',                color:'#f59e0b', label:'Impressora'   },
+  Monitor:     { icon:'fa-tv',                   color:'#64748b', label:'Monitor'      },
+  Switch:      { icon:'fa-network-wired',        color:'#06b6d4', label:'Switch'       },
+  Router:      { icon:'fa-wifi',                 color:'#22c55e', label:'Roteador'     },
+  Firewall:    { icon:'fa-shield-halved',        color:'#ef4444', label:'Firewall'     },
+  Cloud:       { icon:'fa-cloud',                color:'#5b9eff', label:'Cloud'        },
+  Storage:     { icon:'fa-hard-drive',           color:'#06b6d4', label:'Storage'      },
+  Nobreak:     { icon:'fa-battery-full',         color:'#f59e0b', label:'Nobreak'      },
+  AccessPoint: { icon:'fa-broadcast-tower',      color:'#22c55e', label:'Access Point' },
+  Link:        { icon:'fa-ethernet',             color:'#0ea5e9', label:'Link'         },
+  Camera:      { icon:'fa-video',                color:'#f43f5e', label:'Câmera'       },
+  Tablet:      { icon:'fa-tablet-screen-button', color:'#ec4899', label:'Tablet'       },
+  Mobile:      { icon:'fa-mobile-screen',        color:'#ec4899', label:'Celular'      },
+  Other:       { icon:'fa-cube',                 color:'#64748b', label:'Outro'        },
 };
 const INFRA_CAT_TO_TYPE = {
   servidor:'Server', switch:'Switch', roteador:'Router', firewall:'Firewall',
   nobreak:'Nobreak', access_point:'AccessPoint', storage:'Storage',
   cloud:'Cloud', link:'Link', camera:'Camera', outro:'Other',
+};
+// Category → dynamic field group (same logic as infra tab)
+const CI_FIELD_GROUPS = {
+  servidor:'server', cloud:'server', storage:'server',
+  switch:'network', roteador:'network', firewall:'network', access_point:'network',
+  nobreak:'nobreak', link:'link',
+  camera:null, outro:null,
 };
 function getTypeMeta(type) {
   if (!type) return EQ_TYPE_META.Other;
@@ -587,6 +776,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (!session) { location.href = 'index.html'; return; }
   _currentUserId = session.user.id;
 
+  if (IS_LOCAL) document.getElementById('btn-scan-net').style.display = 'inline-flex';
   initDrawflow();
   await Promise.all([loadClientData(), loadDevices()]);
   loadMap();
@@ -846,25 +1036,34 @@ function sanitizeDF(raw) {
 async function pingDevice(ip) {
   if (!ip?.trim()) return null;
   const target = ip.trim().replace(/^https?:\/\//, '').split('/')[0];
-  if (IS_CLOUD && isPrivateIP(target)) return null;
-  if (IS_CLOUD) {
+
+  if (IS_LOCAL) {
+    // Localhost: sempre via Python /api/ping — nunca fetch direto ao IP
+    // (evita 406/CORS/mixed-content do browser acessando equipamentos da rede)
     try {
-      const res = await fetch(`${window.SUPABASE_URL}/functions/v1/ping-check`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${window.SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ips: [target] }),
-        signal: AbortSignal.timeout(6000),
-      });
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 6000);
+      const res  = await fetch(`/api/ping?ip=${encodeURIComponent(target)}`, { signal: ctrl.signal });
+      clearTimeout(tid);
       if (!res.ok) return null;
-      return (await res.json()).results?.[0]?.online ?? null;
+      return (await res.json()).online ?? null;
     } catch { return null; }
   }
-  const ctrl = new AbortController();
-  const tid  = setTimeout(() => ctrl.abort(), 3000);
+
+  // Cloud HTTPS: IP privado → não verificável
+  if (isPrivateIP(target)) return null;
+
+  // Cloud HTTPS: IP público → Supabase Edge Function
   try {
-    await fetch(`http://${target}`, { method:'HEAD', mode:'no-cors', cache:'no-store', signal:ctrl.signal });
-    clearTimeout(tid); return true;
-  } catch(e) { clearTimeout(tid); return false; }
+    const res = await fetch(`${window.SUPABASE_URL}/functions/v1/ping-check`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${window.SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ips: [target] }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()).results?.[0]?.online ?? null;
+  } catch { return null; }
 }
 
 async function runPingCheck(silent = true) {
@@ -953,15 +1152,58 @@ function startMonitoring() {
   runPingCheck(true); // primeira verificação imediata
 }
 
-// ── Modal: Adicionar Equipamento ───────────────────────
-function openAddDeviceModal() {
-  document.getElementById('add-dev-name').value     = '';
-  document.getElementById('add-dev-type').value     = 'Desktop';
-  document.getElementById('add-dev-status').value   = 'ativo';
-  document.getElementById('add-dev-hostname').value = '';
-  document.getElementById('add-dev-notes').value    = '';
+// ── Modal: Adicionar Ativo ao Cliente (infra-style) ────
+function ciCategoryChanged() {
+  const group = CI_FIELD_GROUPS[document.getElementById('ci-category').value] || null;
+  document.querySelectorAll('.infra-field-group').forEach(el => el.style.display = 'none');
+  if (group) { const el = document.getElementById(`ci-fields-${group}`); if (el) el.style.display = ''; }
+}
+
+function getCiExtraJson() {
+  const group = CI_FIELD_GROUPS[document.getElementById('ci-category').value];
+  const extra = {};
+  if (group === 'network') {
+    extra.ports      = parseInt(document.getElementById('ci-ports').value)    || null;
+    extra.speed      = document.getElementById('ci-speed').value              || null;
+    extra.management = document.getElementById('ci-mgmt').value               || null;
+    extra.vlan       = document.getElementById('ci-vlan').value               || null;
+    extra.firmware   = document.getElementById('ci-firmware').value           || null;
+  } else if (group === 'nobreak') {
+    extra.va           = parseInt(document.getElementById('ci-va').value)         || null;
+    extra.watts        = parseInt(document.getElementById('ci-watts').value)      || null;
+    extra.autonomia    = parseInt(document.getElementById('ci-autonomia').value)  || null;
+    extra.battery_type = document.getElementById('ci-battery-type').value         || null;
+    extra.battery_date = document.getElementById('ci-battery-date').value         || null;
+  } else if (group === 'link') {
+    extra.download     = document.getElementById('ci-dl').value           || null;
+    extra.upload       = document.getElementById('ci-ul').value           || null;
+    extra.link_type    = document.getElementById('ci-link-type').value    || null;
+    extra.isp          = document.getElementById('ci-isp').value          || null;
+    extra.contract_num = document.getElementById('ci-contract-num').value || null;
+  }
+  return extra;
+}
+
+function openAddDeviceModal(prefill = {}) {
+  ['ci-name','ci-ip','ci-hostname','ci-os','ci-provider','ci-cpu','ci-ram','ci-disk',
+   'ci-cost','ci-responsible','ci-notes','ci-ports','ci-firmware','ci-vlan',
+   'ci-va','ci-watts','ci-autonomia','ci-battery-date','ci-dl','ci-ul',
+   'ci-isp','ci-contract-num'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ci-category').value   = prefill.category   || 'servidor';
+  document.getElementById('ci-active').value     = prefill.is_active === false ? 'false' : 'true';
+  document.getElementById('ci-speed').value      = '';
+  document.getElementById('ci-mgmt').value       = '';
+  document.getElementById('ci-battery-type').value = '';
+  document.getElementById('ci-link-type').value  = '';
+  if (prefill.name)       document.getElementById('ci-name').value  = prefill.name;
+  if (prefill.ip_address) document.getElementById('ci-ip').value    = prefill.ip_address;
+  if (prefill.hostname)   document.getElementById('ci-hostname').value = prefill.hostname;
+  if (prefill.notes)      document.getElementById('ci-notes').value = prefill.notes;
+  ciCategoryChanged();
   document.getElementById('modal-add-device').style.display = 'flex';
-  setTimeout(() => document.getElementById('add-dev-name').focus(), 80);
+  setTimeout(() => document.getElementById('ci-name').focus(), 80);
 }
 
 function closeAddDeviceModal() {
@@ -969,15 +1211,24 @@ function closeAddDeviceModal() {
 }
 
 async function submitAddDevice() {
-  const name     = document.getElementById('add-dev-name').value.trim();
-  const type     = document.getElementById('add-dev-type').value;
-  const status   = document.getElementById('add-dev-status').value;
-  const hostname = document.getElementById('add-dev-hostname').value.trim() || null;
-  const notes    = document.getElementById('add-dev-notes').value.trim() || null;
+  const name       = document.getElementById('ci-name').value.trim();
+  const category   = document.getElementById('ci-category').value;
+  const is_active  = document.getElementById('ci-active').value === 'true';
+  const ip_address = document.getElementById('ci-ip').value.trim()           || null;
+  const hostname   = document.getElementById('ci-hostname').value.trim()     || null;
+  const os         = document.getElementById('ci-os').value.trim()           || null;
+  const provider   = document.getElementById('ci-provider').value.trim()     || null;
+  const cpu_cores  = parseInt(document.getElementById('ci-cpu').value)       || null;
+  const ram_gb     = parseFloat(document.getElementById('ci-ram').value)     || null;
+  const disk_gb    = parseFloat(document.getElementById('ci-disk').value)    || null;
+  const monthly_cost = parseFloat(document.getElementById('ci-cost').value)  || null;
+  const responsible = document.getElementById('ci-responsible').value.trim() || null;
+  const notes      = document.getElementById('ci-notes').value.trim()        || null;
+  const dados_json = getCiExtraJson();
 
   if (!name) {
-    document.getElementById('add-dev-name').focus();
-    showToast('Informe o nome do equipamento.', 'error');
+    document.getElementById('ci-name').focus();
+    showToast('Informe o nome do ativo.', 'error');
     return;
   }
 
@@ -985,36 +1236,111 @@ async function submitAddDevice() {
   btn.disabled = true;
   btn.innerHTML = '<span class="loader" style="width:13px;height:13px;border-width:2px"></span> Salvando...';
 
-  const { data: inserted, error } = await sb.from('equipamentos').insert({
-    user_id:   _currentUserId,
+  const { data: inserted, error } = await sb.from('infraestrutura').insert({
+    user_id: _currentUserId,
     client_id: Number(clientId),
-    name, type, status, hostname, notes,
+    name, category, is_active, ip_address, hostname,
+    os, provider, cpu_cores, ram_gb, disk_gb,
+    monthly_cost, responsible, notes, dados_json,
   }).select().maybeSingle();
 
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Salvar';
 
-  if (error) {
-    showToast('Erro ao salvar: ' + error.message, 'error');
-    return;
-  }
+  if (error) { showToast('Erro ao salvar: ' + error.message, 'error'); return; }
 
   closeAddDeviceModal();
   showToast(`"${name}" adicionado com sucesso!`);
-
-  // Reload devices list + refresh map
   await loadDevices();
 
-  // Auto-add the new node to the canvas at the center
   if (inserted) {
-    const newDev = allDevices.find(d => d.id === inserted.id && d._source === 'equipment');
+    const newDev = allDevices.find(d => d.id === inserted.id && d._source === 'infra');
     if (newDev && df) {
       const canvas = document.getElementById('drawflow');
-      const cx = (canvas.clientWidth  / 2 - df.canvas_x) / df.zoom - 80;
-      const cy = (canvas.clientHeight / 2 - df.canvas_y) / df.zoom - 40;
-      addDeviceNode(newDev, cx, cy);
+      addDeviceNode(newDev,
+        (canvas.clientWidth  / 2 - df.canvas_x) / df.zoom - 80,
+        (canvas.clientHeight / 2 - df.canvas_y) / df.zoom - 40
+      );
     }
   }
+}
+
+// ── Scanner de Rede Local ──────────────────────────────
+function openScanModal() {
+  document.getElementById('scan-results-area').innerHTML = '';
+  document.getElementById('scan-status').textContent = '';
+  document.getElementById('modal-scan').style.display = 'flex';
+}
+
+function closeScanModal() {
+  document.getElementById('modal-scan').style.display = 'none';
+}
+
+async function runScan() {
+  const subnet = document.getElementById('scan-subnet').value.trim();
+  if (!subnet) return;
+
+  const btn    = document.getElementById('btn-run-scan');
+  const status = document.getElementById('scan-status');
+  const area   = document.getElementById('scan-results-area');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader" style="width:13px;height:13px;border-width:2px"></span> Escaneando... (pode levar ~30s)';
+  status.innerHTML = '<i class="fas fa-circle-notch fa-spin" style="margin-right:5px"></i>Enviando pacotes ARP para <strong>' + subnet + '</strong>...';
+  area.innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/scan-network?subnet=${encodeURIComponent(subnet)}`);
+    const json = await res.json();
+
+    if (!res.ok) {
+      status.innerHTML = `<span style="color:var(--red)"><i class="fas fa-circle-xmark"></i> Erro: ${json.error || res.statusText}${json.hint ? ' — ' + json.hint : ''}</span>`;
+      return;
+    }
+
+    renderScanResults(json.devices || []);
+    status.innerHTML = `<span style="color:var(--green)"><i class="fas fa-circle-check"></i> ${json.count} dispositivo(s) encontrado(s) em ${subnet}</span>`;
+  } catch (err) {
+    status.innerHTML = `<span style="color:var(--red)"><i class="fas fa-circle-xmark"></i> Falha na requisição: ${err.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Iniciar Scan';
+  }
+}
+
+function renderScanResults(devices) {
+  const area = document.getElementById('scan-results-area');
+  if (!devices.length) {
+    area.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px"><i class="fas fa-circle-info" style="display:block;font-size:24px;margin-bottom:8px"></i>Nenhum host respondeu ao ARP.<br><small>Verifique se a sub-rede está correta.</small></div>';
+    return;
+  }
+  const rows = devices.map(d => `
+    <tr>
+      <td class="scan-ip">${d.ip}</td>
+      <td class="scan-mac">${d.mac}</td>
+      <td class="scan-host">${d.hostname || '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="text-align:right">
+        <button class="btn btn-primary btn-sm" onclick="addFromScan('${d.ip}','${d.mac}','${(d.hostname||'').replace(/'/g,'')}')">
+          <i class="fas fa-plus"></i> Adicionar
+        </button>
+      </td>
+    </tr>`).join('');
+  area.innerHTML = `
+    <table class="scan-table">
+      <thead><tr>
+        <th>IP</th><th>MAC</th><th>Hostname</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function addFromScan(ip, mac, hostname) {
+  closeScanModal();
+  openAddDeviceModal({
+    name:       hostname || '',
+    ip_address: ip,
+    notes:      `MAC: ${mac}  |  Descoberto por scan ARP`,
+  });
 }
 
 // ── Toast ──────────────────────────────────────────────

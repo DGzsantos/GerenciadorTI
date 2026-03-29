@@ -307,6 +307,10 @@ alter table public.equipamentos
   add column if not exists client_id bigint
   references public.clientes(id) on delete set null;
 
+alter table public.equipamentos
+  add column if not exists communication_port integer
+  check (communication_port is null or (communication_port >= 1 and communication_port <= 65535));
+
 alter table public.infraestrutura
   add column if not exists client_id bigint
   references public.clientes(id) on delete set null;
