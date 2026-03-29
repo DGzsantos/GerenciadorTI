@@ -39,10 +39,12 @@ if (!url || !key) {
   process.exit(1);   // ← build falha com código 1, Vercel bloqueia o deploy
 }
 
+// Usa window.* para evitar conflito de re-declaração com qualquer outro script
+// que possa usar var/let/const SUPABASE_URL no mesmo escopo global.
 const content = `// Gerado automaticamente pelo build (scripts/inject-env.js) — não edite manualmente.
-// Configure SUPABASE_URL e SUPABASE_ANON_KEY no painel da Vercel.
-const SUPABASE_URL  = '${url}';
-const SUPABASE_KEY  = '${key}';
+// Usa window.* para evitar SyntaxError de re-declaração no browser.
+window.SUPABASE_URL = '${url}';
+window.SUPABASE_KEY = '${key}';
 `;
 
 fs.writeFileSync(configPath, content, 'utf-8');
