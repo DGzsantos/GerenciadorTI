@@ -58,8 +58,8 @@ async def serve_config():
         print("[⚠️  config.js] SUPABASE_URL ou SUPABASE_ANON_KEY não definidos no .env")
     content = (
         "// Gerado pelo servidor local (main.py) — não edite manualmente.\n"
-        f"const SUPABASE_URL  = '{url}';\n"
-        f"const SUPABASE_KEY  = '{key}';\n"
+        f"window.SUPABASE_URL = '{url}';\n"
+        f"window.SUPABASE_KEY = '{key}';\n"
     )
     return Response(content=content, media_type="application/javascript")
 

@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalhes do Cliente — Gerenciador de TI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    /* ── Variables ─────────────────────────────────────── */
+    :root {
+      --bg:     #0a0d12; --bg2: #111620; --bg3: #181e2b;
+      --card:   #141926; --border: #1e2535; --border2: #2a3348;
+      --text:   #e2e8f0; --text2: #94a3b8; --text3: #64748b;
+      --accent: #3b7fff; --green: #22c55e; --red: #ef4444;
+      --yellow: #f59e0b; --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif; background: var(--bg);
+      color: var(--text); height: 100dvh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* ── Top bar ───────────────────────────────────────── */
+    .topbar {
+      height: 54px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px; flex-shrink: 0;
+    }
+    .topbar-back {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text2); font-size: 13px; padding: 5px 12px;
+      border-radius: 7px; cursor: pointer; text-decoration: none;
+      transition: all 0.15s;
+    }
+    .topbar-back:hover { color: var(--text); border-color: var(--accent); }
+    .topbar-title { font-size: 15px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar-subtitle { font-size: 12px; color: var(--text3); margin-left: 4px; }
+    .topbar-sep { width: 1px; height: 22px; background: var(--border2); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 13px; border-radius: 7px; font-size: 13px;
+      font-weight: 500; cursor: pointer; border: none;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.12); }
+    .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+    .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+    .btn-success   { background: #16a34a; color: #fff; }
+    .btn-success:hover { filter: brightness(1.12); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── Layout ────────────────────────────────────────── */
+    .layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Left sidebar (client info) ─────────────────── */
+    .sidebar {
+      width: 300px; background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; flex-shrink: 0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-section:last-child { border-bottom: none; flex: 1; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      color: var(--text3); text-transform: uppercase; margin-bottom: 10px;
+    }
+    .info-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--bg3); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .info-val  { font-size: 13px; color: var(--text); line-height: 1.4; }
+    .info-val small { font-size: 11px; color: var(--text3); display: block; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    }
+    .badge-green  { background: #16a34a22; color: #22c55e; }
+    .badge-gray   { background: #47556922; color: #94a3b8; }
+    .badge-yellow { background: #d97706222; color: #f59e0b; }
+    .badge-blue   { background: #3b7fff22; color: #3b7fff; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card {
+      background: var(--bg3); border-radius: 8px; padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+    .stat-card .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .stat-card .lbl { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .stat-card.online .val { color: var(--green); }
+    .stat-card.offline .val { color: var(--red); }
+
+    /* ── Right workspace ─────────────────────────────── */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+
+    /* ── Device panel ─────────────────────────────────── */
+    .device-panel {
+      width: 210px; background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .device-panel-header {
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; color: var(--text3);
+      letter-spacing: .05em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .device-search-wrap {
+      padding: 8px; border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .device-search-wrap input {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 6px; padding: 5px 8px 5px 26px; font-size: 12px;
+      color: var(--text); outline: none; font-family: inherit;
+    }
+    .device-search-wrap input:focus { border-color: var(--accent); }
+    .device-search-wrap .si { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 11px; }
+    .device-list { flex: 1; overflow-y: auto; padding: 6px; }
+    .device-group-lbl {
+      font-size: 10px; font-weight: 700; color: var(--text3);
+      text-transform: uppercase; padding: 6px 4px 3px;
+      letter-spacing: .06em;
+    }
+    .device-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 7px;
+      border: 1px solid transparent; cursor: grab;
+      margin-bottom: 2px; transition: all 0.12s; user-select: none;
+    }
+    .device-item:hover { background: var(--bg3); border-color: var(--border2); }
+    .device-item:active { cursor: grabbing; opacity: 0.7; }
+    .device-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .device-name  { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .device-type  { font-size: 10px; color: var(--text3); }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      background: #475569; transition: background 0.4s, box-shadow 0.4s;
+    }
+    .live-dot.online  { background: var(--green); box-shadow: 0 0 5px #22c55e99; }
+    .live-dot.offline { background: var(--red);   box-shadow: 0 0 5px #ef444499; }
+
+    /* ── Canvas area ─────────────────────────────────── */
+    .canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+    .canvas-hint {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      color: var(--text3); font-size: 13px; pointer-events: none;
+      opacity: 1; transition: opacity 0.3s;
+    }
+    .canvas-hint i { font-size: 32px; }
+    .canvas-hint.hidden { opacity: 0; }
+    #drawflow {
+      width: 100%; height: 100%; background: var(--bg);
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    /* Drawflow dark override */
+    .drawflow { background: transparent !important; }
+    .drawflow .drawflow-node {
+      background: var(--card) !important; border: 1px solid var(--border2) !important;
+      border-radius: 10px !important; padding: 0 !important; min-width: 160px;
+    }
+    .drawflow .drawflow-node.selected { border-color: var(--accent) !important; }
+    .drawflow .drawflow-node .input, .drawflow .drawflow-node .output {
+      background: var(--border2) !important; border: 2px solid var(--border) !important;
+    }
+    .drawflow .drawflow-node .input:hover, .drawflow .drawflow-node .output:hover {
+      background: var(--accent) !important;
+    }
+    .drawflow .connection .main-path { stroke: var(--accent) !important; stroke-width: 2px !important; }
+    /* Node content */
+    .df-node { padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .df-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .df-body { flex: 1; min-width: 0; }
+    .df-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .df-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11px; color: var(--text3); }
+    .df-status { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .df-ip { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'Courier New', monospace; }
+
+    /* Zoom controls */
+    .zoom-ctrls {
+      position: absolute; bottom: 16px; right: 16px;
+      display: flex; flex-direction: column; gap: 4px; z-index: 10;
+    }
+
+    /* Monitor badge */
+    #monitor-badge {
+      font-size: 11px; padding: 3px 9px; border-radius: 6px;
+      background: var(--bg3); color: var(--text3);
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    #monitor-badge.running { color: #3b82f6; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* Loader */
+    .loader {
+      width: 18px; height: 18px; border: 2px solid var(--border2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a href="index.html" class="topbar-back" title="Voltar para o painel">
+    <i class="fas fa-arrow-left"></i> Voltar
+  </a>
+  <div class="topbar-sep"></div>
+  <div class="topbar-title" id="topbar-name">
+    <div class="loader"></div>
+  </div>
+  <div class="topbar-sep"></div>
+  <button class="btn btn-secondary btn-sm" onclick="runPingCheck(false)" id="btn-ping" title="Verificar conectividade agora">
+    <i class="fas fa-satellite-dish"></i> Ping
+  </button>
+  <span id="monitor-badge"><i class="fas fa-circle-dot" style="color:#64748b"></i> —</span>
+  <div class="topbar-sep"></div>
+  <button class="btn btn-secondary btn-sm" onclick="autoArrangeNodes()" title="Organizar automaticamente">
+    <i class="fas fa-wand-magic-sparkles"></i>
+  </button>
+  <button class="btn btn-success btn-sm" onclick="salvarMapa()" id="btn-save-map">
+    <i class="fas fa-floppy-disk"></i> Salvar Mapa
+  </button>
+</div>
+
+<!-- Main layout -->
+<div class="layout">
+
+  <!-- Left: client info -->
+  <aside class="sidebar" id="sidebar-client">
+
+    <!-- Identity -->
+    <div class="sidebar-section">
+      <div class="sidebar-label"><i class="fas fa-building" style="margin-right:5px"></i>Identificação</div>
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-id-card"></i></div>
+        <div class="info-val">
+          <span id="cl-doc">—</span>
+          <small>CNPJ / CPF</small>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-phone"></i></div>
+        <div class="info-val">
+          <span id="cl-contact">—</span>
+          <small>Contato</small>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-user-tie"></i></div>
+        <div class="info-val">
+          <span id="cl-responsible">—</span>
+          <small>Responsável</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service & Status -->
+    <div class="sidebar-section">
+      <div class="sidebar-label"><i class="fas fa-gear" style="margin-right:5px"></i>Serviço</div>
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-screwdriver-wrench"></i></div>
+        <div class="info-val">
+          <span id="cl-service">—</span>
+          <small>Tipo de serviço</small>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-circle-check"></i></div>
+        <div class="info-val">
+          <span id="cl-status">—</span>
+          <small>Status do contrato</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="sidebar-section" id="cl-notes-wrap" style="display:none">
+      <div class="sidebar-label"><i class="fas fa-note-sticky" style="margin-right:5px"></i>Observações</div>
+      <p id="cl-notes" style="font-size:12px;color:var(--text2);line-height:1.5"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="sidebar-section">
+      <div class="sidebar-label"><i class="fas fa-chart-bar" style="margin-right:5px"></i>Ativos</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="val" id="stat-eq">—</div>
+          <div class="lbl">Equipamentos</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="stat-infra">—</div>
+          <div class="lbl">Infraestrutura</div>
+        </div>
+        <div class="stat-card online">
+          <div class="val" id="stat-online">—</div>
+          <div class="lbl">Online</div>
+        </div>
+        <div class="stat-card offline">
+          <div class="val" id="stat-offline">—</div>
+          <div class="lbl">Offline</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last checked -->
+    <div class="sidebar-section">
+      <div class="sidebar-label"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Última verificação</div>
+      <div style="font-size:12px;color:var(--text3)" id="cl-last-checked">Nenhuma ainda</div>
+    </div>
+
+  </aside>
+
+  <!-- Right: workspace -->
+  <div class="workspace">
+
+    <!-- Device panel -->
+    <div class="device-panel">
+      <div class="device-panel-header">
+        <i class="fas fa-server"></i> Dispositivos
+      </div>
+      <div class="device-search-wrap">
+        <i class="fas fa-search si"></i>
+        <input type="text" id="device-search" placeholder="Filtrar..." oninput="filterDevices()" />
+      </div>
+      <div class="device-list" id="device-list">
+        <div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">
+          <div class="loader" style="margin:0 auto 8px"></div>
+          Carregando dispositivos...
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap"
+         ondragover="event.preventDefault()"
+         ondrop="onCanvasDrop(event)">
+      <div id="drawflow"></div>
+      <div class="canvas-hint" id="canvas-hint">
+        <i class="fas fa-diagram-project"></i>
+        Arraste dispositivos do painel para o mapa
+      </div>
+      <div class="zoom-ctrls">
+        <button class="btn btn-secondary btn-sm" onclick="df?.zoom_in()" title="Zoom +"><i class="fas fa-plus"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="df?.zoom_out()" title="Zoom −"><i class="fas fa-minus"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="resetZoom()" title="Centralizar"><i class="fas fa-expand"></i></button>
+      </div>
+    </div>
+
+  </div><!-- .workspace -->
+</div><!-- .layout -->
+
+<!-- ── Scripts ─────────────────────────────────────────── -->
+<script>window.SUPABASE_URL = window.SUPABASE_URL || ''; window.SUPABASE_KEY = window.SUPABASE_KEY || '';</script>
+<script src="config.js" onerror="console.error('[Config] config.js não carregou.')"></script>
+<script>
+'use strict';
+
+// ── Supabase init ───────────────────────────────────────
+const { createClient } = supabase;
+if (!window.SUPABASE_URL?.startsWith('http')) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#fca5a5;font-family:Inter,sans-serif;text-align:center;padding:20px"><div><h2 style="color:#ef4444;margin-bottom:12px">⚠️ Configuração ausente</h2><p>Defina SUPABASE_URL e SUPABASE_ANON_KEY nas variáveis de ambiente da Vercel.</p></div></div>';
+  throw new Error('Supabase não configurado');
+}
+const sb = createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+
+// ── Env detection ───────────────────────────────────────
+const IS_CLOUD = location.protocol === 'https:';
+function isPrivateIP(ip) {
+  return /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|::1$|localhost)/i.test((ip ?? '').trim());
+}
+
+// ── Type metadata (mirrors index.html) ─────────────────
+const EQ_TYPE_META = {
+  Server:      { icon:'fa-server',           color:'#3b7fff', label:'Servidor'     },
+  Notebook:    { icon:'fa-laptop',           color:'#a855f7', label:'Notebook'     },
+  Desktop:     { icon:'fa-desktop',          color:'#06b6d4', label:'Desktop'      },
+  Printer:     { icon:'fa-print',            color:'#f59e0b', label:'Impressora'   },
+  Monitor:     { icon:'fa-display',          color:'#8b5cf6', label:'Monitor'      },
+  Switch:      { icon:'fa-network-wired',    color:'#10b981', label:'Switch'       },
+  Router:      { icon:'fa-route',            color:'#f97316', label:'Roteador'     },
+  Firewall:    { icon:'fa-shield-halved',    color:'#ef4444', label:'Firewall'     },
+  Cloud:       { icon:'fa-cloud',            color:'#0ea5e9', label:'Cloud'        },
+  Storage:     { icon:'fa-database',         color:'#6366f1', label:'Storage'      },
+  Nobreak:     { icon:'fa-battery-full',     color:'#84cc16', label:'Nobreak'      },
+  AccessPoint: { icon:'fa-broadcast-tower',  color:'#22c55e', label:'Access Point' },
+  Link:        { icon:'fa-ethernet',         color:'#0ea5e9', label:'Link'         },
+  Camera:      { icon:'fa-video',            color:'#f43f5e', label:'Câmera'       },
+  Tablet:      { icon:'fa-tablet',           color:'#ec4899', label:'Tablet'       },
+  Mobile:      { icon:'fa-mobile',           color:'#14b8a6', label:'Celular'      },
+  Other:       { icon:'fa-cube',             color:'#64748b', label:'Outro'        },
+};
+const INFRA_CAT_TO_TYPE = {
+  servidor:'Server', switch:'Switch', roteador:'Router', firewall:'Firewall',
+  nobreak:'Nobreak', access_point:'AccessPoint', storage:'Storage',
+  cloud:'Cloud', link:'Link', camera:'Camera', outro:'Other',
+};
+function getTypeMeta(type) {
+  if (!type) return EQ_TYPE_META.Other;
+  if (EQ_TYPE_META[type]) return EQ_TYPE_META[type];
+  const mapped = INFRA_CAT_TO_TYPE[type] || INFRA_CAT_TO_TYPE[type.toLowerCase()];
+  return EQ_TYPE_META[mapped] || EQ_TYPE_META.Other;
+}
+const SERVICE_LABEL = {
+  suporte:'Suporte', infra:'Infraestrutura', dev:'Desenvolvimento',
+  consultoria:'Consultoria', cftv:'CFTV', redes:'Redes', outro:'Outro'
+};
+const STATUS_BADGE = {
+  ativo:     '<span class="badge badge-green">Ativo</span>',
+  inativo:   '<span class="badge badge-gray">Inativo</span>',
+  prospecto: '<span class="badge badge-yellow">Prospecto</span>',
+};
+const STATUS_COLOR = { ativo:'#22c55e', manutencao:'#f59e0b', inativo:'#64748b', descartado:'#ef4444' };
+
+// ── State ───────────────────────────────────────────────
+let clientId   = null;
+let clientData = null;
+let equipList  = [];   // equipamentos deste cliente
+let infraList  = [];   // infraestrutura deste cliente
+let allDevices = [];   // merged (para o painel + mapa)
+let df         = null; // Drawflow instance
+let _draggedDevice = null;
+let _monitorRunning = false;
+let _monitorInterval = null;
+const MONITOR_MIN = 5;
+
+// ── URL param ───────────────────────────────────────────
+function getClientIdFromURL() {
+  return new URLSearchParams(location.search).get('id');
+}
+
+// ── Init ────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  clientId = getClientIdFromURL();
+  if (!clientId) {
+    document.getElementById('topbar-name').textContent = 'Cliente não especificado';
+    return;
+  }
+
+  // Auth check
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href = 'index.html'; return; }
+
+  initDrawflow();
+  await Promise.all([loadClientData(), loadDevices()]);
+  loadMap();
+  startMonitoring();
+});
+
+// ── Auth watch ─────────────────────────────────────────
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_OUT') location.href = 'index.html';
+});
+
+// ── Load client info ───────────────────────────────────
+async function loadClientData() {
+  const { data, error } = await sb.from('clientes').select('*').eq('id', clientId).maybeSingle();
+  if (error || !data) {
+    document.getElementById('topbar-name').textContent = 'Cliente não encontrado';
+    return;
+  }
+  clientData = data;
+  document.title = `${data.name} — Gerenciador de TI`;
+  document.getElementById('topbar-name').innerHTML =
+    `${data.name} <span class="topbar-subtitle">#${data.id}</span>`;
+  document.getElementById('cl-doc').textContent         = data.document_number || '—';
+  document.getElementById('cl-contact').textContent     = data.contact || '—';
+  document.getElementById('cl-responsible').textContent = data.responsible || '—';
+  document.getElementById('cl-service').textContent     = SERVICE_LABEL[data.service_type] || data.service_type || '—';
+  document.getElementById('cl-status').innerHTML        = STATUS_BADGE[data.status] || data.status;
+  if (data.notes) {
+    document.getElementById('cl-notes').textContent      = data.notes;
+    document.getElementById('cl-notes-wrap').style.display = '';
+  }
+}
+
+// ── Load devices (equip + infra filtered by client_id) ─
+async function loadDevices() {
+  const [eqRes, infraRes] = await Promise.all([
+    sb.from('equipamentos').select('*').eq('client_id', clientId),
+    sb.from('infraestrutura').select('*').eq('client_id', clientId),
+  ]);
+  equipList = eqRes.data || [];
+  infraList = infraRes.data || [];
+
+  allDevices = [
+    ...equipList.map(e => ({
+      ...e, _source:'equipment',
+      type: e.type || 'Other',
+    })),
+    ...infraList.map(i => ({
+      ...i, _source:'infra',
+      type: INFRA_CAT_TO_TYPE[i.category] || 'Other',
+    })),
+  ];
+
+  updateStats();
+  renderDevicePanel(allDevices);
+}
+
+// ── Stats ──────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-eq').textContent    = equipList.length;
+  document.getElementById('stat-infra').textContent = infraList.length;
+  const online  = infraList.filter(i => i.online_status === true).length;
+  const offline = infraList.filter(i => i.online_status === false).length;
+  document.getElementById('stat-online').textContent  = online;
+  document.getElementById('stat-offline').textContent = offline;
+  const lastTimes = infraList.map(i => i.last_checked_at).filter(Boolean).sort();
+  const lastTime  = lastTimes[lastTimes.length - 1];
+  document.getElementById('cl-last-checked').textContent =
+    lastTime ? new Date(lastTime).toLocaleString('pt-BR') : 'Nenhuma ainda';
+}
+
+// ── Device panel render ────────────────────────────────
+function renderDevicePanel(items) {
+  const list  = document.getElementById('device-list');
+  if (!items.length) {
+    list.innerHTML = `<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px">
+      <i class="fas fa-box-open" style="font-size:24px;display:block;margin-bottom:8px"></i>
+      Nenhum dispositivo vinculado a este cliente.<br>
+      <small>Associe equipamentos via aba Equipamentos.</small>
+    </div>`;
+    return;
+  }
+  const groups = {};
+  for (const d of items) {
+    if (!groups[d.type]) groups[d.type] = [];
+    groups[d.type].push(d);
+  }
+  const order = ['Server','Switch','Router','Firewall','Cloud','Storage','Nobreak','AccessPoint','Link','Camera','Desktop','Notebook','Printer','Monitor','Other'];
+  const keys  = [...new Set([...order, ...Object.keys(groups)])].filter(k => groups[k]);
+  let html = '';
+  for (const type of keys) {
+    const meta = getTypeMeta(type);
+    html += `<div class="device-group-lbl">${meta.label}</div>`;
+    for (const d of groups[type]) {
+      const hasIP    = d._source === 'infra' && d.ip_address;
+      const liveCls  = hasIP ? (d.online_status === true ? 'online' : d.online_status === false ? 'offline' : '') : '';
+      const liveTip  = hasIP ? (d.online_status === true ? 'Online' : d.online_status === false ? 'Offline' : 'Não verificado') : '';
+      const st       = d._source === 'infra' ? (d.is_active !== false ? 'ativo' : 'inativo') : (d.status || 'ativo');
+      const stColor  = STATUS_COLOR[st] || STATUS_COLOR.inativo;
+      const dragObj  = JSON.stringify({ id:d.id, name:d.name, type, _source:d._source, ip_address:d.ip_address||null, hostname:d.hostname||null, status:st, online_status:d.online_status??null });
+      html += `<div class="device-item" draggable="true"
+        data-infra-id="${d._source==='infra'?d.id:''}"
+        data-drag='${dragObj.replace(/'/g,"&apos;")}'
+        ondragstart="onDeviceDragStart(event,this)" title="${d.name}">
+        <div class="device-icon" style="background:${meta.color}22;color:${meta.color}">
+          <i class="fas ${meta.icon}"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="device-name">${d.name}</div>
+          <div class="device-type" style="color:${stColor}">● ${st}</div>
+        </div>
+        ${hasIP ? `<div class="live-dot ${liveCls}" title="${liveTip}"></div>` : ''}
+      </div>`;
+    }
+  }
+  list.innerHTML = html;
+}
+
+function filterDevices() {
+  const q = document.getElementById('device-search').value.toLowerCase().trim();
+  renderDevicePanel(q ? allDevices.filter(d =>
+    d.name.toLowerCase().includes(q) || (d.type||'').toLowerCase().includes(q)
+  ) : allDevices);
+}
+
+// ── Drawflow init ───────────────────────────────────────
+function initDrawflow() {
+  const container = document.getElementById('drawflow');
+  df = new Drawflow(container);
+  df.reroute = true;
+  df.reroute_fix_curvature = true;
+  df.editor_mode = 'edit';
+  df.zoom_max = 3; df.zoom_min = 0.2; df.zoom_value = 0.1;
+  df.start();
+  document.querySelectorAll('body > svg').forEach(el => el.remove());
+  df.on('nodeCreated', () => updateCanvasHint());
+  df.on('nodeRemoved', () => updateCanvasHint());
+}
+
+function updateCanvasHint() {
+  const nodes = Object.keys(df?.export()?.drawflow?.Home?.data || {});
+  const hint  = document.getElementById('canvas-hint');
+  if (hint) hint.classList.toggle('hidden', nodes.length > 0);
+}
+
+function resetZoom() {
+  if (!df) return;
+  df.zoom_reset(); df.canvas_x = 0; df.canvas_y = 0;
+  df.precanvas.style.transform = 'translate(0px,0px) scale(1)'; df.zoom = 1;
+}
+
+// ── Add node to canvas ─────────────────────────────────
+function addDeviceNode(dev, x, y) {
+  if (!df) return;
+  const meta      = getTypeMeta(dev.type);
+  const sc        = STATUS_COLOR[dev.status] || STATUS_COLOR.inativo;
+  const liveColor = dev.online_status === true ? '#22c55e' : dev.online_status === false ? '#ef4444' : '#475569';
+  const showLive  = dev._source === 'infra' && dev.ip_address;
+  df.addNode('device', 1, 1, x, y, 'drawflow-node-custom', { device: dev },
+    `<div class="df-node">
+      <div class="df-icon" style="background:${meta.color}22;color:${meta.color}">
+        <i class="fas ${meta.icon}"></i>
+      </div>
+      <div class="df-body">
+        <div class="df-name">${dev.name}</div>
+        <div class="df-meta">
+          <span class="df-status" style="background:${sc}"></span>
+          <span>${meta.label}</span>
+          ${showLive ? `<span class="df-live-dot" style="width:6px;height:6px;border-radius:50%;background:${liveColor};margin-left:2px;flex-shrink:0" title="${dev.online_status===true?'Online':dev.online_status===false?'Offline':'Não verificado'}"></span>` : ''}
+        </div>
+        ${dev.ip_address||dev.hostname ? `<div class="df-ip">${dev.ip_address||dev.hostname}</div>` : ''}
+      </div>
+    </div>`
+  );
+  updateCanvasHint();
+}
+
+// ── Drag & drop ─────────────────────────────────────────
+function onDeviceDragStart(event, el) {
+  try { _draggedDevice = JSON.parse(el.dataset.drag); event.dataTransfer.setData('text/plain', el.dataset.drag); }
+  catch(e) { console.warn(e); }
+}
+function onCanvasDrop(event) {
+  event.preventDefault();
+  let dev = _draggedDevice;
+  if (!dev) try { dev = JSON.parse(event.dataTransfer.getData('text/plain')); } catch(e) { return; }
+  _draggedDevice = null;
+  if (!dev || !df) return;
+  const rect = document.getElementById('drawflow').getBoundingClientRect();
+  addDeviceNode(dev,
+    (event.clientX - rect.left - df.canvas_x) / df.zoom,
+    (event.clientY - rect.top  - df.canvas_y) / df.zoom
+  );
+}
+
+// ── Auto-arrange: place all devices in a grid ───────────
+function autoArrangeNodes() {
+  if (!df) return;
+  df.clearModuleSelected();
+  const COLS = 4, SPACING_X = 220, SPACING_Y = 110, START_X = 60, START_Y = 60;
+  allDevices.forEach((dev, i) => {
+    addDeviceNode(dev,
+      START_X + (i % COLS) * SPACING_X,
+      START_Y + Math.floor(i / COLS) * SPACING_Y
+    );
+  });
+}
+
+// ── Save / Load map (localStorage per client) ───────────
+const mapKey = () => `topo_client_${clientId}`;
+
+function salvarMapa() {
+  if (!df) return;
+  try {
+    localStorage.setItem(mapKey(), JSON.stringify(df.export()));
+    showToast('Mapa salvo! ✓');
+  } catch(e) { showToast('Erro ao salvar mapa: ' + e.message, 'error'); }
+}
+
+async function loadMap() {
+  const saved = localStorage.getItem(mapKey());
+  if (saved) {
+    try {
+      const parsed = sanitizeDF(JSON.parse(saved));
+      df.import(parsed);
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      Object.keys(parsed?.drawflow?.Home?.data || {}).forEach(id => {
+        try { df.updateConnectionNodes('node-' + id); } catch(_) {}
+      });
+      updateCanvasHint();
+      return;
+    } catch(e) { console.warn('[loadMap]', e); }
+  }
+  // No saved layout — auto-arrange if devices exist
+  if (allDevices.length > 0) autoArrangeNodes();
+}
+
+function sanitizeDF(raw) {
+  try {
+    const home = raw?.drawflow?.Home?.data;
+    if (!home) return raw;
+    for (const id of Object.keys(home)) {
+      const n = home[id];
+      if (!n || typeof n !== 'object') { delete home[id]; continue; }
+      n.pos_x = isFinite(Number(n.pos_x)) ? Number(n.pos_x) : 60;
+      n.pos_y = isFinite(Number(n.pos_y)) ? Number(n.pos_y) : 60;
+      if (!n.inputs  || typeof n.inputs  !== 'object') n.inputs  = { input_1:  { connections: [] } };
+      if (!n.outputs || typeof n.outputs !== 'object') n.outputs = { output_1: { connections: [] } };
+    }
+  } catch(e) { console.warn('[sanitizeDF]', e); }
+  return raw;
+}
+
+// ── Ping / Connectivity check ──────────────────────────
+async function pingDevice(ip) {
+  if (!ip?.trim()) return null;
+  const target = ip.trim().replace(/^https?:\/\//, '').split('/')[0];
+  if (IS_CLOUD && isPrivateIP(target)) return null;
+  if (IS_CLOUD) {
+    try {
+      const res = await fetch(`${window.SUPABASE_URL}/functions/v1/ping-check`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${window.SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ips: [target] }),
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) return null;
+      return (await res.json()).results?.[0]?.online ?? null;
+    } catch { return null; }
+  }
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 3000);
+  try {
+    await fetch(`http://${target}`, { method:'HEAD', mode:'no-cors', cache:'no-store', signal:ctrl.signal });
+    clearTimeout(tid); return true;
+  } catch(e) { clearTimeout(tid); return false; }
+}
+
+async function runPingCheck(silent = true) {
+  if (_monitorRunning) return;
+  _monitorRunning = true;
+  const btn = document.getElementById('btn-ping');
+  if (btn) btn.disabled = true;
+  setMonitorBadge('running', 'Verificando...');
+
+  const targets = infraList.filter(i => i.ip_address?.trim());
+  if (!targets.length) {
+    const allPrivate = IS_CLOUD && infraList.filter(i => i.ip_address).every(i => isPrivateIP(i.ip_address));
+    setMonitorBadge(allPrivate ? 'cloud' : 'idle', allPrivate ? 'IPs locais — indisponível em nuvem' : 'Nenhum IP cadastrado');
+    _monitorRunning = false; if (btn) btn.disabled = false; return;
+  }
+
+  if (IS_CLOUD && targets.every(t => isPrivateIP(t.ip_address))) {
+    setMonitorBadge('cloud', 'IPs locais — indisponível em nuvem');
+    if (!silent) showToast('IPs privados não são verificáveis em produção (HTTPS). Use acesso local.', 'info');
+    _monitorRunning = false; if (btn) btn.disabled = false; return;
+  }
+
+  const BATCH = 3; const results = [];
+  for (let i = 0; i < targets.length; i += BATCH) {
+    const checks = await Promise.all(targets.slice(i, i+BATCH).map(async item => ({
+      id: item.id, online: await pingDevice(item.ip_address),
+    })));
+    results.push(...checks);
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  // Persist to Supabase
+  const now = new Date().toISOString();
+  await Promise.all(results.filter(r => r.online !== null).map(r =>
+    sb.from('infraestrutura').update({ online_status: r.online, last_checked_at: now }).eq('id', r.id)
+      .then(({ error }) => { if (error) console.warn('[Ping]', r.id, error.message); })
+  ));
+
+  // Update local cache + re-render panel
+  for (const r of results) {
+    const item = infraList.find(i => i.id === r.id);
+    if (item) item.online_status = r.online;
+  }
+  updateStats();
+  renderDevicePanel(allDevices);
+  updateMapNodes(results);
+
+  const on  = results.filter(r => r.online === true).length;
+  const off = results.filter(r => r.online === false).length;
+  const unk = results.filter(r => r.online === null).length;
+  let txt = `${on} online · ${off} offline`; if (unk) txt += ` · ${unk} indispon.`;
+  setMonitorBadge('done', txt);
+  if (!silent) showToast(`Ping: ${on} online, ${off} offline${unk ? ', ' + unk + ' indispon.' : ''}`);
+
+  _monitorRunning = false; if (btn) btn.disabled = false;
+}
+
+// Update dots inside drawflow nodes
+function updateMapNodes(results) {
+  const nodeMap = df?.export()?.drawflow?.Home?.data || {};
+  for (const [dfId, nodeData] of Object.entries(nodeMap)) {
+    const dev = nodeData.data?.device;
+    if (!dev || dev._source !== 'infra') continue;
+    const r = results.find(x => x.id === dev.id);
+    if (!r || r.online === null) continue;
+    const el = document.getElementById('node-' + dfId);
+    if (!el) continue;
+    const dot = el.querySelector('.df-live-dot');
+    if (dot) { dot.style.background = r.online ? '#22c55e' : '#ef4444'; dot.title = r.online ? 'Online' : 'Offline'; }
+    const icon = el.querySelector('.df-icon');
+    if (icon) { icon.style.boxShadow = r.online ? '0 0 8px #22c55e55' : '0 0 8px #ef444455'; setTimeout(() => { if (icon) icon.style.boxShadow = ''; }, 2000); }
+  }
+}
+
+function setMonitorBadge(state, text) {
+  const badge = document.getElementById('monitor-badge');
+  if (!badge) return;
+  const color = state==='running'?'#3b82f6':state==='done'?'#22c55e':state==='cloud'?'#f59e0b':'#64748b';
+  badge.className = state==='running'?'running':'';
+  badge.innerHTML = `<i class="fas fa-circle-dot" style="color:${color}"></i> ${text}`;
+}
+
+function startMonitoring() {
+  if (_monitorInterval) clearInterval(_monitorInterval);
+  _monitorInterval = setInterval(() => runPingCheck(true), MONITOR_MIN * 60 * 1000);
+  runPingCheck(true); // primeira verificação imediata
+}
+
+// ── Toast ──────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  const bg = type==='error'?'#ef4444':type==='info'?'#3b82f6':'#22c55e';
+  t.style.cssText = `position:fixed;top:70px;right:20px;background:${bg};color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 16px #0006;font-family:Inter,sans-serif;max-width:320px;transition:opacity 0.3s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+</script>
+</body>
+</html>

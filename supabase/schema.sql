@@ -300,6 +300,21 @@ create index if not exists idx_tecnologias_user      on public.tecnologias(user_
 create index if not exists idx_infraestrutura_json   on public.infraestrutura using gin(dados_json);
 
 -- ══════════════════════════════════════════════
+-- VÍNCULO CLIENTE ↔ EQUIPAMENTOS / INFRA
+-- Permite filtrar ativos por cliente na tela de detalhes
+-- ══════════════════════════════════════════════
+alter table public.equipamentos
+  add column if not exists client_id bigint
+  references public.clientes(id) on delete set null;
+
+alter table public.infraestrutura
+  add column if not exists client_id bigint
+  references public.clientes(id) on delete set null;
+
+create index if not exists idx_equipamentos_client   on public.equipamentos(user_id, client_id);
+create index if not exists idx_infraestrutura_client on public.infraestrutura(user_id, client_id);
+
+-- ══════════════════════════════════════════════
 -- VERIFICAÇÃO FINAL
 -- ══════════════════════════════════════════════
 select table_name,

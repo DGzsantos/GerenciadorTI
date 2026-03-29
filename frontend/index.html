@@ -4099,7 +4099,10 @@ async function loadClients() {
   empty.style.display = 'none';
   tbody.innerHTML = data.map(cl => `
     <tr>
-      <td><strong>${cl.name}</strong>${cl.responsible ? `<div style="font-size:11px;color:var(--text3)">${cl.responsible}</div>` : ''}</td>
+      <td>
+        <a href="cliente-detalhes.html?id=${cl.id}" style="color:var(--text);text-decoration:none;font-weight:600" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text)'">${cl.name}</a>
+        ${cl.responsible ? `<div style="font-size:11px;color:var(--text3)">${cl.responsible}</div>` : ''}
+      </td>
       <td class="td-mono">${cl.document_number || '—'}</td>
       <td>${cl.contact || '—'}</td>
       <td><span class="badge badge-blue">${cliServiceLabel[cl.service_type] || cl.service_type || '—'}</span></td>
