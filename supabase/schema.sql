@@ -319,6 +319,75 @@ create index if not exists idx_equipamentos_client   on public.equipamentos(user
 create index if not exists idx_infraestrutura_client on public.infraestrutura(user_id, client_id);
 
 -- ══════════════════════════════════════════════
+-- COLUNAS DO AGENTE DE INVENTÁRIO (equipamentos)
+-- Coletadas automaticamente pelo script agent/inventario.py
+-- ══════════════════════════════════════════════
+alter table public.equipamentos
+  add column if not exists mac_address      text;
+alter table public.equipamentos
+  add column if not exists ip_local         text;
+alter table public.equipamentos
+  add column if not exists hostname_real    text;
+alter table public.equipamentos
+  add column if not exists os_version       text;
+alter table public.equipamentos
+  add column if not exists cpu_model        text;
+alter table public.equipamentos
+  add column if not exists cpu_cores        integer;
+alter table public.equipamentos
+  add column if not exists cpu_freq_mhz     numeric(8,2);
+alter table public.equipamentos
+  add column if not exists ram_total_gb     numeric(8,2);
+alter table public.equipamentos
+  add column if not exists ram_used_gb      numeric(8,2);
+alter table public.equipamentos
+  add column if not exists storage_total_gb numeric(10,2);
+alter table public.equipamentos
+  add column if not exists storage_free_gb  numeric(10,2);
+alter table public.equipamentos
+  add column if not exists agent_version    text;
+alter table public.equipamentos
+  add column if not exists last_inventory_at timestamptz;
+
+-- Heartbeat: última vez que o agente deu sinal de vida
+alter table public.equipamentos
+  add column if not exists last_seen_at timestamptz;
+
+-- GPU
+alter table public.equipamentos
+  add column if not exists gpu_model   text;
+alter table public.equipamentos
+  add column if not exists gpu_vram_gb numeric(6,2);
+alter table public.equipamentos
+  add column if not exists gpu_temp_c  numeric(5,1);
+
+-- Placa-mãe / BIOS
+alter table public.equipamentos
+  add column if not exists mb_manufacturer text;
+alter table public.equipamentos
+  add column if not exists mb_model        text;
+alter table public.equipamentos
+  add column if not exists mb_version      text;
+alter table public.equipamentos
+  add column if not exists bios_version    text;
+alter table public.equipamentos
+  add column if not exists bios_date       text;
+
+-- Inventário de software (array JSON enviado pelo agente)
+alter table public.equipamentos
+  add column if not exists softwares_json  jsonb default '[]'::jsonb;
+
+-- Índice para queries de status online (filtra por recência)
+create index if not exists idx_equipamentos_seen
+  on public.equipamentos(user_id, last_seen_at)
+  where last_seen_at is not null;
+
+-- Índice único: garante que um MAC só exista uma vez por usuário
+create unique index if not exists idx_equipamentos_mac
+  on public.equipamentos(user_id, mac_address)
+  where mac_address is not null;
+
+-- ══════════════════════════════════════════════
 -- VERIFICAÇÃO FINAL
 -- ══════════════════════════════════════════════
 select table_name,

@@ -870,6 +870,18 @@
 
     /* Sobrescreve tema padrão (branco) do Drawflow para dark */
     /* O canvas Drawflow preenche exatamente o .topo-canvas-wrap */
+    /* ── Imagem de fundo do mapa (planta baixa) ── */
+    #topo-bg-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center center;
+      transition: opacity .3s ease;
+    }
+
     #drawflow {
       background-color: #0f172a;
       background-image: radial-gradient(circle, rgba(148,163,184,0.09) 1px, transparent 1px);
@@ -879,7 +891,135 @@
       position: absolute;
       inset: 0;
       overflow: hidden;
+      z-index: 1;             /* fica sobre a imagem de fundo */
     }
+
+    /* ── Popover de configuração do mapa ── */
+    #map-config-popover {
+      display: none;
+      position: absolute;
+      top: 48px; right: 8px;
+      width: 300px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      z-index: 300;
+      padding: 16px;
+    }
+    #map-config-popover.open { display: block; }
+    .map-cfg-title {
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .map-cfg-close {
+      margin-left: auto; background: none; border: none;
+      color: var(--text2); cursor: pointer; font-size: 16px; padding: 2px 4px;
+    }
+    .map-cfg-close:hover { color: var(--text); }
+    .map-cfg-label {
+      font-size: 11px; color: var(--text2); margin-bottom: 6px; font-weight: 600;
+    }
+    .map-cfg-upload-btn {
+      width: 100%; padding: 28px 0; border: 2px dashed var(--border2);
+      border-radius: 8px; background: var(--bg); cursor: pointer;
+      text-align: center; font-size: 12px; color: var(--text2);
+      transition: border-color .2s, color .2s;
+    }
+    .map-cfg-upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .map-cfg-upload-btn i { display: block; font-size: 22px; margin-bottom: 6px; }
+    .map-cfg-preview {
+      width: 100%; height: 80px; object-fit: cover;
+      border-radius: 6px; margin-bottom: 10px; display: none;
+      border: 1px solid var(--border);
+    }
+    .map-cfg-slider-wrap {
+      display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    }
+    .map-cfg-slider-wrap label { font-size: 11px; color: var(--text2); flex-shrink: 0; }
+    .map-cfg-slider-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
+    .map-cfg-slider-val { font-size: 11px; color: var(--text); width: 30px; text-align: right; }
+    .map-cfg-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .map-cfg-actions button { flex: 1; }
+
+    /* ── Floor Plan Mode — pins sobre a planta baixa ── */
+    #topo-floorplan-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;             /* acima do drawflow (z:1) e do bg (z:0) */
+      display: none;          /* ativado apenas no modo floor plan */
+      pointer-events: none;   /* os pins individuais habilitam seus próprios eventos */
+    }
+    .topo-canvas-wrap.floorplan-active #topo-floorplan-overlay {
+      display: block;
+    }
+    /* No modo floor plan, esconde drawflow mas preserva o DOM */
+    .topo-canvas-wrap.floorplan-active #drawflow {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Pin individual */
+    .fp-pin {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transform: translate(-50%, -50%);  /* ancora pelo centro do ícone */
+      cursor: grab;
+      pointer-events: all;
+      user-select: none;
+      z-index: 3;
+    }
+    .fp-pin.dragging { cursor: grabbing; z-index: 100; }
+    .fp-pin-icon {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.65);
+      border: 2px solid rgba(255,255,255,.25);
+      transition: transform .15s, box-shadow .15s;
+      flex-shrink: 0;
+    }
+    .fp-pin:hover .fp-pin-icon {
+      transform: scale(1.25);
+      box-shadow: 0 4px 18px rgba(0,0,0,.75);
+    }
+    .fp-pin.dragging .fp-pin-icon { transform: scale(1.35); }
+    .fp-pin-label {
+      font-size: 10px; font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,.9);
+      white-space: nowrap;
+      max-width: 90px;
+      overflow: hidden; text-overflow: ellipsis;
+      background: rgba(0,0,0,.55);
+      padding: 1px 5px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    /* Badge de status online no pin */
+    .fp-pin-dot {
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      border: 1.5px solid #0f172a;
+    }
+    /* Banner de aviso no canto do canvas */
+    #fp-mode-badge {
+      position: absolute;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(59,127,255,.9);
+      color: #fff; font-size: 11px; font-weight: 600;
+      padding: 4px 14px; border-radius: 99px;
+      z-index: 50; pointer-events: none;
+      display: none;
+    }
+    .topo-canvas-wrap.floorplan-active #fp-mode-badge { display: block; }
 
     /* Garante que drawflow não vaze quando a aba não está ativa */
     #page-infrastructure:not(.active) #drawflow {
@@ -934,45 +1074,49 @@
       stroke: #0f172a;
     }
 
-    /* Nó customizado de equipamento */
+    /* Nó customizado de equipamento — layout quadrado vertical */
+    .drawflow .drawflow-node {
+      min-width: unset;
+      width: 130px;
+    }
+
     .df-eq-node {
       display: flex;
-      align-items: stretch;
-      min-height: 64px;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 10px 10px;
+      gap: 5px;
+      text-align: center;
     }
 
     .df-eq-icon {
-      width: 52px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 10px 0 0 10px;
-      font-size: 20px;
+      font-size: 19px;
       flex-shrink: 0;
     }
 
-    .df-eq-body {
-      flex: 1;
-      padding: 10px 12px;
-      min-width: 0;
-    }
-
     .df-eq-name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
+      width: 100%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 3px;
       color: #e2e8f0;
     }
 
     .df-eq-meta {
-      font-size: 11px;
+      font-size: 10px;
       color: #64748b;
       display: flex;
-      gap: 6px;
+      gap: 5px;
       align-items: center;
+      justify-content: center;
       flex-wrap: wrap;
     }
 
@@ -985,10 +1129,22 @@
 
     .df-eq-ip {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
+      font-size: 9px;
       color: #475569;
-      margin-top: 4px;
     }
+
+    /* Select de tipo de conexão na toolbar */
+    .topo-conn-select {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      font-size: 12px;
+      padding: 4px 8px;
+      cursor: pointer;
+      outline: none;
+    }
+    .topo-conn-select:hover { border-color: var(--accent); color: var(--text); }
 
     /* Painel lateral do topology — cresce para preencher o espaço restante */
     .topo-page {
@@ -1137,6 +1293,13 @@
       text-overflow: ellipsis;
     }
     .topo-item-type { font-size: 10px; color: var(--text3); }
+    .topo-item-chip-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text3); font-size: 13px; padding: 2px 4px;
+      border-radius: 4px; flex-shrink: 0; line-height: 1;
+      transition: color .15s, background .15s;
+    }
+    .topo-item-chip-btn:hover { color: #3b7fff; background: #3b7fff18; }
 
     /* Indicador live de conectividade */
     .live-dot {
@@ -1221,6 +1384,204 @@
       font-size: 12px;
     }
     .topo-panel-empty i { font-size: 24px; display: block; margin-bottom: 8px; }
+
+    /* ── Agent specs modal ── */
+    /* ── Agent specs modal — layout 2 colunas ── */
+    #modal-agent-specs {
+      align-items: center;    /* centraliza verticalmente */
+    }
+    #modal-agent-specs .modal-box {
+      max-width: min(900px, 94vw);
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .specs-header {
+      display: flex; align-items: center; gap: 14px;
+      padding-bottom: 14px; margin-bottom: 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .specs-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff; flex-shrink: 0;
+    }
+    .specs-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+    .specs-sync { font-size: 11px; margin-top: 3px; }
+    .specs-sync.fresh  { color: #22c55e; }
+    .specs-sync.stale  { color: #f59e0b; }
+    .specs-sync.never  { color: var(--text3); }
+    /* Corpo do modal em duas colunas */
+    .specs-body {
+      display: flex;
+      gap: 16px;
+      flex: 1;
+      overflow-y: hidden;
+      padding-top: 14px;
+      height: 500px;
+      width: 800px;
+    }
+    .specs-col-left {
+      width: 45%;
+      flex-shrink: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .specs-col-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-left: 1px solid var(--border);
+      padding-left: 16px;
+    }
+    /* Coluna da direita: lista de softwares ocupa espaço restante */
+    .specs-sw-panel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    /* Cards de hardware na coluna esquerda */
+    .specs-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .specs-card {
+      background: var(--bg); border-radius: 8px; padding: 10px 12px;
+    }
+    .specs-card-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 5px;
+    }
+    .specs-card-val  { font-size: 12px; font-weight: 600; color: var(--text); }
+    .specs-card-sub  { font-size: 10px; color: var(--text2); margin-top: 2px; }
+    .specs-bar-wrap  {
+      background: var(--border); border-radius: 4px; height: 4px;
+      margin-top: 6px; overflow: hidden;
+    }
+    .specs-bar { height: 100%; border-radius: 4px; transition: width .5s; }
+    .specs-row-list  { display: flex; flex-direction: column; }
+    .specs-row {
+      display: flex; justify-content: space-between;
+      font-size: 11px; padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+    .specs-row:last-child { border-bottom: none; }
+    .specs-row-label { color: var(--text2); flex-shrink: 0; }
+    .specs-row-val   { color: var(--text); font-weight: 500; text-align: right; word-break: break-all; }
+    .specs-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text3);
+      margin: 10px 0 6px;
+    }
+    .specs-no-data {
+      text-align: center; padding: 24px 0; color: var(--text3);
+    }
+    .specs-no-data i { font-size: 32px; display: block; margin-bottom: 10px; opacity: .35; }
+    /* Lista de softwares */
+    .specs-sw-search {
+      width: 100%; padding: 6px 10px; border-radius: 6px; font-size: 12px;
+      background: var(--bg); border: 1px solid var(--border2); color: var(--text);
+      margin-bottom: 8px; box-sizing: border-box; flex-shrink: 0;
+    }
+    .specs-sw-search:focus { outline: none; border-color: #3b7fff; }
+    .specs-sw-list {
+      flex: 1; overflow-y: scroll;
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .specs-sw-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .specs-sw-row:last-child { border-bottom: none; }
+    .specs-sw-row:hover { background: var(--bg); }
+    .specs-sw-name { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .specs-sw-ver  { color: var(--text3); flex-shrink: 0; font-size: 10px; }
+    .specs-sw-risk {
+      flex-shrink: 0; font-size: 10px; font-weight: 700;
+      padding: 1px 5px; border-radius: 99px;
+      background: #ef444422; color: #ef4444;
+    }
+    .specs-sw-risk.warn { background: #f59e0b22; color: #f59e0b; }
+    .specs-risk-banner {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; flex-shrink: 0;
+      background: #ef444415; border: 1px solid #ef444440;
+      font-size: 11px; color: #ef4444; line-height: 1.4;
+    }
+    .specs-risk-banner i { margin-top: 1px; flex-shrink: 0; }
+    /* Responsivo: mobile volta para coluna única */
+    @media (max-width: 640px) {
+      .specs-body { flex-direction: column; overflow-y: auto; }
+      .specs-col-left { width: 100%; overflow: visible; }
+      .specs-col-right { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 14px; }
+      .specs-sw-list { max-height: 240px; }
+    }
+
+    /* ── Equipment detail side panel ── */
+    #equip-detail-panel {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 280px;
+      background: var(--card);
+      border-left: 1px solid var(--border2);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+    }
+    #equip-detail-panel.open { display: flex; }
+    .edp-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .edp-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #fff; flex-shrink: 0;
+    }
+    .edp-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; word-break: break-word; }
+    .edp-subtitle { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .edp-close {
+      margin-left: auto; background: none; border: none;
+      color: var(--text2); cursor: pointer; font-size: 16px; padding: 4px;
+    }
+    .edp-close:hover { color: var(--text); }
+    .edp-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+    .edp-section { margin-bottom: 14px; }
+    .edp-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 6px;
+    }
+    .edp-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 4px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px; gap: 8px;
+    }
+    .edp-row:last-child { border-bottom: none; }
+    .edp-label { color: var(--text2); flex-shrink: 0; }
+    .edp-val { color: var(--text); text-align: right; word-break: break-all; }
+    .edp-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600;
+    }
+    .edp-bar-wrap {
+      background: var(--bg); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 4px;
+    }
+    .edp-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+    .edp-no-agent {
+      text-align: center; padding: 20px 8px;
+      color: var(--text3); font-size: 12px;
+    }
+    .edp-no-agent i { font-size: 22px; display: block; margin-bottom: 8px; opacity: .4; }
   </style>
 </head>
 <body>
@@ -1467,6 +1828,23 @@
 
         <div class="topo-toolbar-sep"></div>
 
+        <!-- Tipo de conexão -->
+        <i class="fas fa-bezier-curve" style="color:var(--text3);font-size:12px"></i>
+        <select class="topo-conn-select" id="topo-conn-type" onchange="setConnType(this.value)" title="Tipo de linha de conexão">
+          <option value="curva">Curva</option>
+          <option value="reto">Reta</option>
+          <option value="degrau">Degrau</option>
+        </select>
+
+        <div class="topo-toolbar-sep"></div>
+
+        <!-- Configurar planta baixa -->
+        <button class="btn btn-secondary btn-sm" onclick="toggleMapConfig()" id="btn-map-config" title="Imagem de fundo / planta baixa">
+          <i class="fas fa-image"></i> Configurar Mapa
+        </button>
+
+        <div class="topo-toolbar-sep"></div>
+
         <!-- Monitoramento de conectividade -->
         <button class="btn btn-secondary btn-sm" onclick="runConnectivityCheck(false)" id="btn-ping" title="Verificar conectividade dos ativos agora">
           <i class="fas fa-satellite-dish"></i> Ping
@@ -1509,7 +1887,49 @@
         <div class="topo-canvas-wrap"
           ondragover="event.preventDefault()"
           ondrop="topoDrop(event)">
+
+          <!-- Camada 0: imagem de fundo (planta baixa) -->
+          <div id="topo-bg-layer"></div>
+
+          <!-- Camada 1: canvas Drawflow -->
           <div id="drawflow"></div>
+
+          <!-- Popover de configuração do mapa -->
+          <div id="map-config-popover">
+            <div class="map-cfg-title">
+              <i class="fas fa-image" style="color:var(--accent)"></i> Configurar Mapa
+              <button class="map-cfg-close" onclick="closeMapConfig()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Preview da imagem atual -->
+            <img id="map-cfg-preview" class="map-cfg-preview" alt="Prévia">
+
+            <!-- Upload -->
+            <div class="map-cfg-label">Imagem de Fundo (Planta Baixa)</div>
+            <label class="map-cfg-upload-btn" for="map-bg-file-input" id="map-cfg-upload-label">
+              <i class="fas fa-cloud-arrow-up"></i>
+              Clique para selecionar JPG / PNG
+            </label>
+            <input type="file" id="map-bg-file-input" accept="image/jpeg,image/png,image/gif,image/webp"
+              style="display:none" onchange="handleMapBgUpload(this)">
+
+            <!-- Slider de opacidade -->
+            <div class="map-cfg-slider-wrap">
+              <label><i class="fas fa-circle-half-stroke"></i> Opacidade</label>
+              <input type="range" id="map-bg-opacity" min="5" max="100" value="40"
+                oninput="setMapBgOpacity(this.value)">
+              <span class="map-cfg-slider-val" id="map-opacity-val">40%</span>
+            </div>
+
+            <div class="map-cfg-actions">
+              <button class="btn btn-danger btn-sm" onclick="removeMapBackground()">
+                <i class="fas fa-trash"></i> Remover
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="closeMapConfig()">
+                Fechar
+              </button>
+            </div>
+          </div>
 
           <!-- Controles de zoom flutuantes -->
           <div class="topo-zoom-controls">
@@ -1533,6 +1953,19 @@
             <i class="fas fa-hand-pointer" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4"></i>
             <div style="font-size:14px;opacity:0.5">Arraste equipamentos do painel para o mapa</div>
             <div style="font-size:12px;opacity:0.35;margin-top:4px">Conecte os nós arrastando de porta a porta</div>
+          </div>
+
+          <!-- Equipment detail panel (shown on node click) -->
+          <div id="equip-detail-panel">
+            <div class="edp-header">
+              <div class="edp-icon" id="edp-icon"><i class="fas fa-cube"></i></div>
+              <div>
+                <div class="edp-title" id="edp-title">—</div>
+                <div class="edp-subtitle" id="edp-subtitle">—</div>
+              </div>
+              <button class="edp-close" onclick="hideEquipDetails()" title="Fechar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="edp-body" id="edp-body"></div>
           </div>
         </div>
       </div>
@@ -2934,6 +3367,10 @@ async function loadEquipments() {
   const empty = document.getElementById('eq-empty');
   if (!data?.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
+  // Mapa seguro para o modal de specs (evita quebra de onclick com aspas/apóstrofos)
+  window._agentSpecsMap = {};
+  data.forEach(eq => { window._agentSpecsMap[eq.id] = eq; });
+
   tbody.innerHTML = data.map(eq => `
     <tr>
       <td><strong>${eq.name}</strong>${eq.brand ? `<div style="font-size:11px;color:var(--text3)">${eq.brand} ${eq.model || ''}</div>` : ''}</td>
@@ -2943,8 +3380,9 @@ async function loadEquipments() {
       <td>${eq.location || '—'}</td>
       <td>${statusBadge[eq.status] || eq.status}</td>
       <td class="td-actions">
-        <button class="btn btn-secondary btn-sm" onclick="editEquipment(${eq.id})"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="deleteEquipment(${eq.id},'${eq.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
+        ${eq.last_inventory_at ? `<button class="btn btn-secondary btn-sm" style="color:#3b7fff" title="Informações" onclick="openAgentSpecsById(${eq.id})"><i class="fas fa-microchip"></i></button>` : ''}
+        <button class="btn btn-secondary btn-sm" title="Editar" onclick="editEquipment(${eq.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" title="Excluir" onclick="deleteEquipment(${eq.id},'${eq.name.replace(/'/g,'')}')"><i class="fas fa-trash"></i></button>
       </td>
     </tr>`).join('');
 }
@@ -3143,7 +3581,7 @@ async function loadInfra() {
   if (!drawflowEditor) initDrawflow();
   await loadTopoPanel();
   await topoLoad(true);
-  // Dispara verificação inicial silenciosa assim que os dados estão prontos
+  applyMapBackground();          // restaura imagem de fundo salva no localStorage
   runConnectivityCheck(true);
 }
 
@@ -3166,6 +3604,7 @@ function initDrawflow() {
   drawflowEditor.zoom_min = 0.3;
   drawflowEditor.zoom_value = 0.1;
   drawflowEditor.start();
+  _initConnType();
 
   // Remove SVGs órfãos que o Drawflow eventualmente injeta fora do container
   document.querySelectorAll('body > svg').forEach(el => el.remove());
@@ -3178,6 +3617,104 @@ function initDrawflow() {
     const h = document.getElementById('topo-hint');
     if (h) h.style.display = nodes.length ? 'none' : 'block';
   });
+
+  drawflowEditor.on('nodeSelected', id => {
+    const nodeData = drawflowEditor.getNodeFromId(id);
+    if (!nodeData) return;
+    // Node data is stored as { equipment: <full eq/infra object> }
+    const equip = nodeData.data?.equipment;
+    if (equip) showEquipDetails(equip);
+  });
+
+  drawflowEditor.on('nodeUnselected', () => {
+    hideEquipDetails();
+  });
+}
+
+function hideEquipDetails() {
+  const panel = document.getElementById('equip-detail-panel');
+  if (panel) panel.classList.remove('open');
+}
+
+function showEquipDetails(meta) {
+  // meta = nodeData.data from drawflow (has _source, type, name, plus agent fields)
+  const panel   = document.getElementById('equip-detail-panel');
+  const iconEl  = document.getElementById('edp-icon');
+  const titleEl = document.getElementById('edp-title');
+  const subEl   = document.getElementById('edp-subtitle');
+  const bodyEl  = document.getElementById('edp-body');
+  if (!panel) return;
+
+  const tm = getTypeMeta(meta.type);
+  iconEl.style.background = tm.color;
+  iconEl.innerHTML = `<i class="fas ${tm.icon}"></i>`;
+  titleEl.textContent = meta.name || '—';
+
+  const statusLabels = { ativo:'Ativo', inativo:'Inativo', manutencao:'Manutenção', descartado:'Descartado' };
+  const statusColors = { ativo:'#22c55e', inativo:'#64748b', manutencao:'#f59e0b', descartado:'#ef4444' };
+  const st = meta.is_active === false ? 'inativo' : (meta.status || 'ativo');
+  subEl.innerHTML = `<span class="edp-badge" style="background:${statusColors[st] || '#64748b'}22;color:${statusColors[st] || '#64748b'}">${statusLabels[st] || st}</span>`;
+
+  bodyEl.innerHTML = buildEquipDetailsHTML(meta);
+  panel.classList.add('open');
+}
+
+function buildEquipDetailsHTML(m) {
+  const row = (label, val) => val != null && val !== ''
+    ? `<div class="edp-row"><span class="edp-label">${label}</span><span class="edp-val">${val}</span></div>`
+    : '';
+
+  const pct = (used, total) => total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+  const barColor = p => p > 85 ? '#ef4444' : p > 65 ? '#f59e0b' : '#22c55e';
+  const bar = (used, total, unit) => {
+    if (!total) return '';
+    const p = pct(used, total);
+    return `<div>${used} ${unit} / ${total} ${unit}
+      <div class="edp-bar-wrap"><div class="edp-bar" style="width:${p}%;background:${barColor(p)}"></div></div></div>`;
+  };
+
+  let html = '';
+
+  // ── Identificação
+  html += `<div class="edp-section"><div class="edp-section-title">Identificação</div>`;
+  html += row('Tipo', m.type || m.category);
+  html += row('Local', m.location);
+  html += row('IP', m.ip_address || m.ip_local);
+  html += row('Hostname', m.hostname_real || m.hostname);
+  html += row('Responsável', m.responsible || m.responsible_user);
+  html += `</div>`;
+
+  // ── Dados do Agente (só se last_inventory_at existe)
+  if (m.last_inventory_at) {
+    const ts = new Date(m.last_inventory_at).toLocaleString('pt-BR');
+    html += `<div class="edp-section"><div class="edp-section-title">Inventário <span style="font-weight:400;text-transform:none">(${ts})</span></div>`;
+    html += row('OS', m.os_version);
+    html += row('CPU', m.cpu_model);
+    if (m.cpu_cores) {
+      const freq = m.cpu_freq_mhz ? ` @ ${m.cpu_freq_mhz} MHz` : '';
+      html += row('Núcleos', `${m.cpu_cores}${freq}`);
+    }
+    if (m.ram_total_gb) {
+      html += `<div class="edp-row"><span class="edp-label">RAM</span><span class="edp-val">${bar(m.ram_used_gb, m.ram_total_gb, 'GB')}</span></div>`;
+    }
+    if (m.storage_total_gb) {
+      const used = m.storage_total_gb - m.storage_free_gb;
+      html += `<div class="edp-row"><span class="edp-label">Disco</span><span class="edp-val">${bar(used.toFixed(1), m.storage_total_gb, 'GB')}</span></div>`;
+    }
+    html += row('MAC', m.mac_address);
+    html += row('Agente', m.agent_version ? `v${m.agent_version}` : null);
+    html += `</div>`;
+  } else {
+    html += `<div class="edp-no-agent"><i class="fas fa-robot"></i>Sem dados do agente.<br>Execute <code>inventario.py</code> neste equipamento.</div>`;
+  }
+
+  // ── Notas
+  if (m.notes) {
+    html += `<div class="edp-section"><div class="edp-section-title">Notas</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">${m.notes}</div></div>`;
+  }
+
+  return html;
 }
 
 async function loadTopoPanel() {
@@ -3223,10 +3760,18 @@ function renderTopoPanelList(items) {
       const liveTip  = hasIP ? (item.online_status === true ? 'Online' : item.online_status === false ? 'Offline' : 'Não verificado') : '';
       const liveDot  = hasIP ? `<div class="live-dot ${liveCls}" title="${liveTip}"></div>` : '';
       const infraId  = item._source === 'infra' ? `data-infra-id="${item.id}"` : '';
+      const hasAgentData = item._source === 'equipment' && item.last_inventory_at;
+      const agentSt  = item._source === 'equipment' ? agentOnlineStatus(item.last_seen_at) : null;
+      const agentDot = agentSt
+        ? `<div style="width:8px;height:8px;border-radius:50%;background:${agentSt.color};flex-shrink:0" title="${agentSt.label}"></div>`
+        : '';
+      const agentBtn = hasAgentData
+        ? `<button class="topo-item-chip-btn" title="Informações Técnicas" onclick="event.stopPropagation();openAgentSpecsById(${item.id})"><i class="fas fa-microchip"></i></button>`
+        : '';
       html += `<div class="topo-item" draggable="true" data-eq='${dragData}' ${infraId} ondragstart="topoDragStart(event,this)" title="${item.name}">
         <div class="topo-item-icon" style="background:${meta.color}22;color:${meta.color}"><i class="fas ${meta.icon}"></i></div>
         <div class="topo-item-info"><div class="topo-item-name">${item.name}</div><div class="topo-item-type" style="color:${statusColor}">● ${itemStatus}</div></div>
-        ${liveDot}</div>`;
+        ${agentBtn}${agentDot}${liveDot}</div>`;
     }
   }
   list.innerHTML = html;
@@ -3270,18 +3815,144 @@ function addEquipmentNode(eq, x, y) {
   const liveTip   = eq.online_status === true ? 'Online' : eq.online_status === false ? 'Offline' : 'Não verificado';
   const showLive  = eq._source === 'infra' && eq.ip_address;
   drawflowEditor.addNode('equipment', 1, 1, x, y, 'equipment-node', { equipment: eq },
-    `<div class="df-eq-node"><div class="df-eq-icon" style="background:${meta.color}22;color:${meta.color}"><i class="fas ${meta.icon}"></i></div>
-    <div class="df-eq-body"><div class="df-eq-name">${eq.name}</div>
-    <div class="df-eq-meta">
-      <span class="df-eq-status" style="background:${sc}"></span><span>${meta.label}</span>
-      ${showLive ? `<span class="df-live-dot" style="width:6px;height:6px;border-radius:50%;background:${liveColor};display:inline-block;margin-left:4px;flex-shrink:0" title="${liveTip}"></span>` : ''}
-    </div>
-    ${eq.ip_address||eq.hostname ? `<div class="df-eq-ip">${eq.ip_address||eq.hostname}</div>` : ''}</div></div>`
+    `<div class="df-eq-node">
+      <div class="df-eq-icon" style="background:${meta.color}22;color:${meta.color}"><i class="fas ${meta.icon}"></i></div>
+      <div class="df-eq-name">${eq.name}</div>
+      <div class="df-eq-meta">
+        <span class="df-eq-status" style="background:${sc}"></span><span>${meta.label}</span>
+        ${showLive ? `<span class="df-live-dot" style="width:6px;height:6px;border-radius:50%;background:${liveColor};display:inline-block;flex-shrink:0" title="${liveTip}"></span>` : ''}
+      </div>
+      ${eq.ip_address||eq.hostname ? `<div class="df-eq-ip">${eq.ip_address||eq.hostname}</div>` : ''}
+    </div>`
   );
 }
 
 function topoZoomIn()  { drawflowEditor?.zoom_in(); }
 function topoZoomOut() { drawflowEditor?.zoom_out(); }
+
+// ── Tipo de conexão ────────────────────────────────────────────
+function _connTypeKey() { return `topo_conn_type_${currentUser?.id || 'local'}`; }
+
+function setConnType(type) {
+  localStorage.setItem(_connTypeKey(), type);
+  _applyConnType(type);
+}
+
+function _applyConnType(type) {
+  if (!drawflowEditor) return;
+  drawflowEditor.createCurvature = function(x1, y1, x2, y2, cv) {
+    if (type === 'reto') {
+      return `M ${x1} ${y1} L ${x2} ${y2}`;
+    } else if (type === 'degrau') {
+      const mx = (x1 + x2) / 2;
+      return `M ${x1} ${y1} H ${mx} V ${y2} H ${x2}`;
+    } else {
+      const hx1 = x1 + Math.abs(cv * (x2 - x1));
+      const hx2 = x2 - Math.abs(cv * (x2 - x1));
+      return `M ${x1} ${y1} C ${hx1} ${y1} ${hx2} ${y2} ${x2} ${y2}`;
+    }
+  };
+  // Redesenha todas as conexões existentes
+  const state = drawflowEditor.export();
+  drawflowEditor.import(state);
+}
+
+function _initConnType() {
+  const saved = localStorage.getItem(_connTypeKey()) || 'curva';
+  const sel = document.getElementById('topo-conn-type');
+  if (sel) sel.value = saved;
+  _applyConnType(saved);
+}
+
+// ── Imagem de fundo do mapa (planta baixa) ────────────────
+
+function _mapBgKey()      { return `topo_bg_img_${currentUser?.id || 'local'}`; }
+function _mapOpacityKey() { return `topo_bg_opacity_${currentUser?.id || 'local'}`; }
+
+function applyMapBackground() {
+  const layer   = document.getElementById('topo-bg-layer');
+  const preview = document.getElementById('map-cfg-preview');
+  const label   = document.getElementById('map-cfg-upload-label');
+  const slider  = document.getElementById('map-bg-opacity');
+  const valSpan = document.getElementById('map-opacity-val');
+  if (!layer) return;
+
+  const img     = localStorage.getItem(_mapBgKey());
+  const opacity = parseInt(localStorage.getItem(_mapOpacityKey()) || '40', 10);
+
+  if (img) {
+    layer.style.backgroundImage = `url(${img})`;
+    layer.style.opacity = opacity / 100;
+    // Fundo do drawflow fica transparente para deixar a imagem aparecer
+    document.getElementById('drawflow').style.backgroundColor = 'rgba(15,23,42,0.55)';
+    document.getElementById('drawflow').style.backgroundImage = 'none';
+
+    if (preview) { preview.src = img; preview.style.display = 'block'; }
+    if (label)   { label.innerHTML = '<i class="fas fa-check" style="color:#22c55e"></i> Imagem carregada — clique para trocar'; }
+  } else {
+    layer.style.backgroundImage = '';
+    // Restaura fundo padrão do drawflow
+    document.getElementById('drawflow').style.backgroundColor = '#0f172a';
+    document.getElementById('drawflow').style.backgroundImage =
+      'radial-gradient(circle, rgba(148,163,184,0.09) 1px, transparent 1px)';
+
+    if (preview) { preview.style.display = 'none'; }
+    if (label)   { label.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Clique para selecionar JPG / PNG'; }
+  }
+
+  if (slider)  { slider.value = opacity; }
+  if (valSpan) { valSpan.textContent = opacity + '%'; }
+}
+
+function handleMapBgUpload(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) {
+    toast('Imagem muito grande (máx 8 MB). Compacte antes de enviar.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    localStorage.setItem(_mapBgKey(), e.target.result);
+    applyMapBackground();
+    toast('Imagem de fundo aplicada!', 'success');
+  };
+  reader.readAsDataURL(file);
+  input.value = ''; // permite re-upload do mesmo arquivo
+}
+
+function setMapBgOpacity(val) {
+  const v = parseInt(val, 10);
+  const valSpan = document.getElementById('map-opacity-val');
+  if (valSpan) valSpan.textContent = v + '%';
+  const layer = document.getElementById('topo-bg-layer');
+  if (layer) layer.style.opacity = v / 100;
+  localStorage.setItem(_mapOpacityKey(), v);
+}
+
+function removeMapBackground() {
+  localStorage.removeItem(_mapBgKey());
+  applyMapBackground();
+  toast('Imagem de fundo removida.', 'success');
+}
+
+function toggleMapConfig() {
+  const pop = document.getElementById('map-config-popover');
+  if (!pop) return;
+  if (pop.classList.contains('open')) {
+    closeMapConfig();
+  } else {
+    applyMapBackground(); // atualiza preview antes de abrir
+    pop.classList.add('open');
+    document.getElementById('btn-map-config')?.classList.add('active');
+  }
+}
+
+function closeMapConfig() {
+  document.getElementById('map-config-popover')?.classList.remove('open');
+  document.getElementById('btn-map-config')?.classList.remove('active');
+}
+
 function topoFit()     { if (!drawflowEditor) return; drawflowEditor.zoom_reset(); drawflowEditor.canvas_x = 0; drawflowEditor.canvas_y = 0; drawflowEditor.precanvas.style.transform = 'translate(0px,0px) scale(1)'; drawflowEditor.zoom = 1; }
 
 /**
@@ -4420,7 +5091,251 @@ async function checkAdminNav() {
   document.getElementById('nav-users')?.style.setProperty('display', 'flex');
 }
 
+// ── Status online do agente ───────────────────────────────
+// Thresholds: online < 10 min | degradado < 60 min | offline caso contrário
+function agentOnlineStatus(last_seen_at) {
+  if (!last_seen_at) return { status: 'never', color: '#475569', label: 'Nunca conectado', icon: '⬜' };
+  const diffMin = (Date.now() - new Date(last_seen_at)) / 60000;
+  if (diffMin <  10) return { status: 'online',    color: '#22c55e', label: 'Online',        icon: '🟢' };
+  if (diffMin <  60) return { status: 'degraded',  color: '#f59e0b', label: 'Inativo há ' + Math.round(diffMin) + ' min', icon: '🟡' };
+  return               { status: 'offline',   color: '#ef4444', label: 'Offline',       icon: '🔴' };
+}
+
+// ── Informações Técnicas do Agente ───────────────────────
+function openAgentSpecsById(id) {
+  const eq = window._agentSpecsMap?.[id];
+  if (!eq) return;
+  openAgentSpecs(eq);
+}
+
+function openAgentSpecs(eq) {
+  const container = document.getElementById('agent-specs-content');
+  if (!container) return;
+  container.innerHTML = buildAgentSpecsHTML(eq);
+  openModal('modal-agent-specs');
+}
+
+function buildAgentSpecsHTML(eq) {
+  const tm = getTypeMeta(eq.type);
+
+  // ── Cabeçalho
+  const onlineSt = agentOnlineStatus(eq.last_seen_at);
+
+  // Badge de status online (baseado em last_seen_at)
+  const statusBadgeHTML = `
+    <div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;
+      background:${onlineSt.color}22;color:${onlineSt.color};font-size:11px;font-weight:600;margin-top:5px">
+      <div style="width:7px;height:7px;border-radius:50%;background:${onlineSt.color};flex-shrink:0${onlineSt.status==='online' ? ';animation:pulse-dot 1.5s infinite' : ''}"></div>
+      ${onlineSt.label}
+    </div>`;
+
+  // Linha: último sinal do heartbeat
+  const lastSeenHTML = eq.last_seen_at
+    ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">
+         <i class="fas fa-signal" style="margin-right:4px;opacity:.6"></i>Último sinal:
+         <strong>${new Date(eq.last_seen_at).toLocaleString('pt-BR')}</strong>
+       </div>`
+    : `<div style="font-size:11px;color:var(--text3);margin-top:4px">
+         <i class="fas fa-signal" style="margin-right:4px;opacity:.4"></i>Nenhum sinal recebido ainda
+       </div>`;
+
+  // Linha: último inventário completo (last_inventory_at)
+  const lastInventoryHTML = eq.last_inventory_at
+    ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">
+         <i class="fas fa-clipboard-list" style="margin-right:4px;opacity:.6"></i>Último inventário:
+         <strong>${new Date(eq.last_inventory_at).toLocaleString('pt-BR')}</strong>
+       </div>`
+    : '';
+
+  // ── Animação pulse (injetada uma vez)
+  let html = `<style>@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}</style>`;
+
+  // ── Cabeçalho (sempre visível, fora das colunas)
+  html += `
+    <div class="specs-header">
+      <div class="specs-icon" style="background:${tm.color}"><i class="fas ${tm.icon}"></i></div>
+      <div style="min-width:0;flex:1">
+        <div class="specs-name">${eq.name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:5px">
+          ${statusBadgeHTML}
+          ${lastSeenHTML}
+          ${lastInventoryHTML}
+        </div>
+      </div>
+    </div>`;
+
+  if (!eq.last_inventory_at) {
+    html += `<div class="specs-no-data">
+      <i class="fas fa-robot"></i>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Sem dados do agente</div>
+      <div style="font-size:12px;color:var(--text3)">Execute <code>inventario.py</code> neste equipamento<br>para coletar informações técnicas automaticamente.</div>
+    </div>`;
+    return html;
+  }
+
+  // ── Helpers
+  const pct    = (used, total) => total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+  const barClr = p => p > 85 ? '#ef4444' : p > 65 ? '#f59e0b' : '#22c55e';
+  const secTitle = (icon, label) =>
+    `<div class="specs-section-title"><i class="fas ${icon}" style="margin-right:4px"></i>${label}</div>`;
+
+  // ════════════════════════════════════════════════
+  // COLUNA ESQUERDA — Hardware
+  // ════════════════════════════════════════════════
+  let leftCol = '';
+
+  // CPU (span 2 cols)
+  if (eq.cpu_model) {
+    const freqStr = eq.cpu_freq_mhz ? `${eq.cpu_freq_mhz} MHz` : '';
+    leftCol += `<div class="specs-grid" style="margin-bottom:8px">
+      <div class="specs-card" style="grid-column:1/-1">
+        <div class="specs-card-label"><i class="fas fa-microchip" style="margin-right:4px"></i>Processador</div>
+        <div class="specs-card-val" style="font-size:11px;line-height:1.3">${eq.cpu_model}</div>
+        <div class="specs-card-sub">${eq.cpu_cores ? eq.cpu_cores + ' núcleos' : ''}${freqStr ? ' · ' + freqStr : ''}</div>
+      </div>`;
+
+    // RAM + Disco lado a lado
+    const ramPct   = pct(eq.ram_used_gb, eq.ram_total_gb);
+    const diskUsed = (eq.storage_total_gb || 0) - (eq.storage_free_gb || 0);
+    const diskPct  = pct(diskUsed, eq.storage_total_gb);
+
+    if (eq.ram_total_gb) {
+      leftCol += `<div class="specs-card">
+        <div class="specs-card-label"><i class="fas fa-memory" style="margin-right:4px"></i>RAM</div>
+        <div class="specs-card-val">${eq.ram_used_gb} <span style="font-weight:400;color:var(--text2)">/ ${eq.ram_total_gb} GB</span></div>
+        <div class="specs-bar-wrap"><div class="specs-bar" style="width:${ramPct}%;background:${barClr(ramPct)}"></div></div>
+        <div class="specs-card-sub" style="margin-top:3px">${ramPct}% usado</div>
+      </div>`;
+    }
+    if (eq.storage_total_gb) {
+      leftCol += `<div class="specs-card">
+        <div class="specs-card-label"><i class="fas fa-hard-drive" style="margin-right:4px"></i>Disco (C:)</div>
+        <div class="specs-card-val">${diskUsed.toFixed(0)} <span style="font-weight:400;color:var(--text2)">/ ${eq.storage_total_gb} GB</span></div>
+        <div class="specs-bar-wrap"><div class="specs-bar" style="width:${diskPct}%;background:${barClr(diskPct)}"></div></div>
+        <div class="specs-card-sub" style="margin-top:3px">${eq.storage_free_gb} GB livres</div>
+      </div>`;
+    }
+
+    // GPU (span 2 cols)
+    if (eq.gpu_model) {
+      const vramStr = eq.gpu_vram_gb ? `${eq.gpu_vram_gb} GB VRAM` : '';
+      const tempClr = eq.gpu_temp_c > 85 ? '#ef4444' : eq.gpu_temp_c > 70 ? '#f59e0b' : '#22c55e';
+      const tempStr = eq.gpu_temp_c != null
+        ? `<span style="color:${tempClr};font-weight:700">${eq.gpu_temp_c}°C</span>`
+        : '';
+      leftCol += `<div class="specs-card" style="grid-column:1/-1">
+        <div class="specs-card-label"><i class="fas fa-display" style="margin-right:4px"></i>GPU</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
+          <div class="specs-card-val" style="font-size:11px;line-height:1.3">${eq.gpu_model}</div>
+          <div style="font-size:12px;flex-shrink:0">${tempStr}</div>
+        </div>
+        ${vramStr ? `<div class="specs-card-sub">${vramStr}</div>` : ''}
+      </div>`;
+    }
+
+    leftCol += `</div>`; // fecha specs-grid
+  }
+
+  // Placa-mãe / BIOS
+  if (eq.mb_model || eq.bios_version) {
+    leftCol += secTitle('fa-circuit-board', 'Placa-mãe / BIOS');
+    leftCol += `<div class="specs-row-list">`;
+    if (eq.mb_model) {
+      const mbFull = [eq.mb_manufacturer, eq.mb_model, eq.mb_version].filter(Boolean).join(' ');
+      leftCol += `<div class="specs-row"><span class="specs-row-label">Placa-mãe</span><span class="specs-row-val">${mbFull}</span></div>`;
+    }
+    if (eq.bios_version) {
+      leftCol += `<div class="specs-row"><span class="specs-row-label">BIOS</span><span class="specs-row-val">${eq.bios_version}${eq.bios_date ? ' · ' + eq.bios_date : ''}</span></div>`;
+    }
+    leftCol += `</div>`;
+  }
+
+  // Rede / Sistema
+  const sysRows = [
+    ['OS',      eq.os_version],
+    ['Hostname',eq.hostname_real],
+    ['IP Local',eq.ip_local],
+    ['MAC',     eq.mac_address],
+    ['Agente',  eq.agent_version ? 'v' + eq.agent_version : null],
+  ].filter(([,v]) => v);
+
+  if (sysRows.length) {
+    leftCol += secTitle('fa-network-wired', 'Rede / Sistema');
+    leftCol += `<div class="specs-row-list">`;
+    for (const [label, val] of sysRows) {
+      leftCol += `<div class="specs-row"><span class="specs-row-label">${label}</span><span class="specs-row-val">${val}</span></div>`;
+    }
+    leftCol += `</div>`;
+  }
+
+  // ════════════════════════════════════════════════
+  // COLUNA DIREITA — Softwares
+  // ════════════════════════════════════════════════
+  const softwares = Array.isArray(eq.softwares_json) ? eq.softwares_json : [];
+  const swId      = `sw-search-${eq.id || Date.now()}`;
+  const risky     = softwares.filter(s => s.risk);
+
+  let rightCol = `<div class="specs-sw-panel">`;
+  rightCol += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0">
+    ${secTitle('fa-box-open', `Softwares Instalados`)}
+    <span style="font-size:11px;color:var(--text3);margin-bottom:10px">${softwares.length} encontrados</span>
+  </div>`;
+
+  if (risky.length) {
+    rightCol += `<div class="specs-risk-banner">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div><strong>${risky.length} risco${risky.length > 1 ? 's' : ''} detectado${risky.length > 1 ? 's' : ''}:</strong>
+        ${risky.map(s => `<span style="display:inline-block;margin:2px 3px 0 0;padding:1px 6px;border-radius:99px;background:#ef444430;font-size:10px">${s.name}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (softwares.length) {
+    rightCol += `<input class="specs-sw-search" id="${swId}" placeholder="🔍  Filtrar softwares..." oninput="filterSpecsSw(this,'${swId}-list')">
+      <div class="specs-sw-list" id="${swId}-list">`;
+    for (const sw of softwares) {
+      const riskCls   = sw.risk?.startsWith('🔴') ? '' : 'warn';
+      const riskBadge = sw.risk ? `<span class="specs-sw-risk ${riskCls}">${sw.risk}</span>` : '';
+      const ver       = sw.version ? `v${sw.version}` : '';
+      rightCol += `<div class="specs-sw-row" data-sw="${(sw.name||'').toLowerCase()}">
+        <span class="specs-sw-name" title="${sw.name}">${sw.name}</span>
+        <span class="specs-sw-ver">${ver}</span>
+        ${riskBadge}
+      </div>`;
+    }
+    rightCol += `</div>`;
+  } else {
+    rightCol += `<div style="text-align:center;padding:32px 0;color:var(--text3);font-size:12px">Nenhum software registrado</div>`;
+  }
+
+  rightCol += `</div>`; // fecha specs-sw-panel
+
+  // ── Monta layout final
+  html += `<div class="specs-body">
+    <div class="specs-col-left">${leftCol}</div>
+    <div class="specs-col-right">${rightCol}</div>
+  </div>`;
+
+  return html;
+}
+
+function filterSpecsSw(input, listId) {
+  const q    = input.value.toLowerCase();
+  const rows = document.getElementById(listId)?.querySelectorAll('.specs-sw-row');
+  rows?.forEach(row => {
+    row.style.display = (!q || row.dataset.sw.includes(q)) ? '' : 'none';
+  });
+}
+
 </script>
+
+<!-- ══════════ MODAL: Informações Técnicas do Agente ══════════ -->
+<div class="modal-overlay" id="modal-agent-specs" onclick="if(event.target===this)closeModal('modal-agent-specs')">
+  <div class="modal-box" style="background:var(--card);border-radius:16px;padding:20px 24px;position:relative">
+    <button class="modal-close" onclick="closeModal('modal-agent-specs')" style="position:absolute;top:12px;right:14px;z-index:1">×</button>
+    <div id="agent-specs-content"></div>
+  </div>
+</div>
 
 </body>
 </html>
